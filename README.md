@@ -1,4 +1,6 @@
-# 🌌 Galaxy Smart Wallet
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/1cbfe0cc-4c25-488e-94d4-786666b2738d" alt="Galaxy Smart Wallet Logo" width="380">
+</p>
 
 **Galaxy Smart Wallet** is a decentralized wallet built on **Stellar**, designed for secure and on-chain asset management. Developed with **Next.js, TailwindCSS, and Zustand**, it provides a seamless and user-friendly interface for interacting with the Stellar blockchain.
 

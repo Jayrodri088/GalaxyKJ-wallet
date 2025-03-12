@@ -12,7 +12,6 @@ export function StarBackground() {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    // Set canvas dimensions
     const resizeCanvas = () => {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
@@ -21,11 +20,9 @@ export function StarBackground() {
     resizeCanvas()
     window.addEventListener("resize", resizeCanvas)
 
-    // Star properties
     const stars: { x: number; y: number; radius: number; opacity: number; speed: number }[] = []
     const starCount = Math.floor((canvas.width * canvas.height) / 5000) // Adjust density
 
-    // Create stars
     for (let i = 0; i < starCount; i++) {
       stars.push({
         x: Math.random() * canvas.width,
@@ -36,11 +33,9 @@ export function StarBackground() {
       })
     }
 
-    // Animation
     let animationFrameId: number
 
     const animate = () => {
-      // Clear with background color instead of clearRect
       ctx.fillStyle = "#0A0B1E"
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
@@ -54,14 +49,12 @@ export function StarBackground() {
         // Move stars
         star.y += star.speed
 
-        // Reset position if star goes off screen
         if (star.y > canvas.height) {
           star.y = 0
           star.x = Math.random() * canvas.width
         }
       })
 
-      // Add subtle glow effect
       const gradient = ctx.createRadialGradient(
         canvas.width / 2,
         canvas.height / 2,

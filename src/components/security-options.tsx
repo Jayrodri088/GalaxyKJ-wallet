@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Fingerprint, AlertTriangle, Lock, Key, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export function SecurityOptions() {
   const { toast } = useToast();
+  const router = useRouter();
 
   const securityFeatures = [
     {
@@ -83,7 +85,7 @@ export function SecurityOptions() {
       <Button
         variant="outline"
         className="w-full mt-2 border-purple-700/30 bg-purple-900/20 hover:bg-purple-900/30 text-purple-300 flex items-center justify-center gap-2"
-        onClick={() => toast({ title: "Support center coming soon" })}
+        onClick={() => router.push("/support")}
       >
         <HelpCircle className="h-4 w-4" />
         Support Center

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Send, ReceiptIcon as ReceiveIcon, Repeat, Search, Menu, Zap, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,11 +12,10 @@ import { TransactionHistory } from "@/components/transaction-history";
 import { AiRecommendations } from "@/components/ai-recommendations";
 import { SecurityOptions } from "@/components/security-options";
 import { StarBackground } from "@/components/star-background";
-import { useToast } from "@/hooks/use-toast";
 import { useMobile } from "@/hooks/use-mobile";
 
 export function Wallet() {
-  const { toast } = useToast();
+  const router = useRouter();
   const isMobile = useMobile();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -67,12 +67,8 @@ export function Wallet() {
               />
             </div>
             <div className="space-y-2">
-              <Button variant="ghost" className="w-full justify-start">
-                Dashboard
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                Settings
-              </Button>
+              <Button variant="ghost" className="w-full justify-start">Dashboard</Button>
+              <Button variant="ghost" className="w-full justify-start">Settings</Button>
               <Button variant="ghost" className="w-full justify-start">
                 <HelpCircle className="h-4 w-4 mr-2 text-purple-400" />
                 Support
@@ -88,28 +84,31 @@ export function Wallet() {
             <div className="grid grid-cols-4 gap-4">
               <Button
                 className="h-20 bg-gradient-to-br from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 border-0 rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)]"
-                onClick={() => toast({ title: "Send function coming soon" })}
+                onClick={() => router.push("/send-receive?tab=send")}
               >
                 <Send className="h-6 w-6" />
                 <span>Send</span>
               </Button>
+
               <Button
                 className="h-20 bg-gradient-to-br from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 border-0 rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-300 hover:shadow-[0_0_15px_rgba(147,51,234,0.5)]"
-                onClick={() => toast({ title: "Receive function coming soon" })}
+                onClick={() => router.push("/send-receive?tab=receive")}
               >
                 <ReceiveIcon className="h-6 w-6" />
                 <span>Receive</span>
               </Button>
+
               <Button
                 className="h-20 bg-gradient-to-br from-indigo-600 to-indigo-800 hover:from-indigo-500 hover:to-indigo-700 border-0 rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-300 hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]"
-                onClick={() => toast({ title: "Swap function coming soon" })}
+                onClick={() => router.push("/swap")}
               >
                 <Repeat className="h-6 w-6" />
                 <span>Swap</span>
               </Button>
+
               <Button
                 className="h-20 bg-gradient-to-br from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 border-0 rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-300 hover:shadow-[0_0_15px_rgba(245,158,11,0.5)]"
-                onClick={() => toast({ title: "Automation function coming soon" })}
+                onClick={() => router.push("/automate")}
               >
                 <Zap className="h-6 w-6" />
                 <span>Automate</span>
@@ -124,19 +123,11 @@ export function Wallet() {
           <div className="space-y-6">
             <Tabs defaultValue="ai" className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-gray-900/50">
-                <TabsTrigger value="ai" className="data-[state=active]:bg-purple-900/50">
-                  AI Insights
-                </TabsTrigger>
-                <TabsTrigger value="security" className="data-[state=active]:bg-purple-900/50">
-                  Security
-                </TabsTrigger>
+                <TabsTrigger value="ai" className="data-[state=active]:bg-purple-900/50">AI Insights</TabsTrigger>
+                <TabsTrigger value="security" className="data-[state=active]:bg-purple-900/50">Security</TabsTrigger>
               </TabsList>
-              <TabsContent value="ai" className="mt-4">
-                <AiRecommendations />
-              </TabsContent>
-              <TabsContent value="security" className="mt-4">
-                <SecurityOptions />
-              </TabsContent>
+              <TabsContent value="ai" className="mt-4"><AiRecommendations /></TabsContent>
+              <TabsContent value="security" className="mt-4"><SecurityOptions /></TabsContent>
             </Tabs>
           </div>
         </div>
@@ -144,7 +135,7 @@ export function Wallet() {
         <div className="fixed bottom-6 right-6 z-20 md:hidden">
           <Button
             className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-[0_0_15px_rgba(124,58,237,0.5)] transition-all duration-300"
-            onClick={() => toast({ title: "Support coming soon" })}
+            onClick={() => router.push("/support")}
           >
             <HelpCircle className="h-6 w-6" />
             <span className="sr-only">Support</span>

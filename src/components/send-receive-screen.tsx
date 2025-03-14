@@ -1,7 +1,7 @@
-// components/send-receive-screen.tsx
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
 import { StarBackground } from "@/components/star-background"
@@ -9,18 +9,29 @@ import { SendForm } from "@/components/send-form"
 import { ReceiveForm } from "@/components/receive-form"
 import { ArrowLeft } from 'lucide-react'
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
 
 export function SendReceiveScreen() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState("send")
+  const searchParams = useSearchParams()
+  
+  const tabFromURL = searchParams.get("tab") || "send"
+  const [activeTab, setActiveTab] = useState(tabFromURL)
+
+  useEffect(() => {
+    setActiveTab(tabFromURL)
+  }, [tabFromURL])
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    router.push(`/send-receive?tab=${value}`, { scroll: false }) 
+  }
 
   return (
     <div className="relative w-full min-h-screen bg-[#0A0B1E] text-white overflow-hidden">
       <StarBackground />
 
       <div className="relative z-10 container mx-auto px-4 py-6">
-        {/* Header */}
+
         <header className="flex items-center gap-3 mb-8">
           <Button
             variant="ghost"
@@ -36,9 +47,8 @@ export function SendReceiveScreen() {
           <h1 className="text-lg font-medium text-white">{activeTab === "send" ? "Send Assets" : "Receive Assets"}</h1>
         </header>
 
-        {/* Main Content */}
         <div className="max-w-md mx-auto">
-          <Tabs defaultValue="send" className="w-full" onValueChange={(value) => setActiveTab(value)}>
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-transparent mb-6">
               <TabsTrigger
                 value="send"

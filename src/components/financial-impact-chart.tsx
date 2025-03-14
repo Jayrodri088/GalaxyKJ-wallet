@@ -11,17 +11,22 @@ import {
   Legend,
   Filler,
 } from "chart.js"
+import type { Automation } from "@/types/automation"
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
-export function FinancialImpactChart({ automation }) {
+interface FinancialImpactChartProps {
+  automation: Automation
+}
+
+export function FinancialImpactChart({ automation }: FinancialImpactChartProps) {
 
   const generateChartData = () => {
     const months = ["Abr", "May", "Jun", "Jul", "Ago", "Sep"]
 
     if (automation.type === "payment") {
 
-      const amount = Number.parseFloat(automation.amount) || 10
+      const amount = Number.parseFloat(automation.amount as string) || 10
       const frequency = automation.frequency || "monthly"
       const multiplier = frequency === "daily" ? 30 : frequency === "weekly" ? 4 : 1
 
@@ -56,7 +61,7 @@ export function FinancialImpactChart({ automation }) {
     } else if (automation.type === "swap") {
 
       const basePrice = 100
-      const conditionValue = Number.parseFloat(automation.conditionValue) || 5
+      const conditionValue = Number.parseFloat(automation.conditionValue as string) || 5
       const condition = automation.condition || "price_increase"
 
       let priceData
@@ -68,10 +73,10 @@ export function FinancialImpactChart({ automation }) {
         priceData = months.map((_, index) => basePrice * (1 + 0.01 * (index - 2)))
       }
 
-      // Add trigger line
+
       const triggerPrice =
         condition === "price_target"
-          ? Number.parseFloat(conditionValue)
+        ? Number.parseFloat(conditionValue as unknown as string)
           : condition === "price_increase"
             ? basePrice * (1 + conditionValue / 100)
             : basePrice * (1 - conditionValue / 100)
@@ -101,9 +106,9 @@ export function FinancialImpactChart({ automation }) {
         ],
       }
     } else if (automation.type === "rule") {
-
       const baseBalance = 1000
-      const threshold = Number.parseFloat(automation.threshold) || 100
+      const threshold = Number.parseFloat(automation.threshold as string) || 100
+
 
       const balanceData = months.map((_, index) => {
         const randomFactor = 0.95 + Math.random() * 0.2
@@ -137,7 +142,7 @@ export function FinancialImpactChart({ automation }) {
       }
     }
 
-    // Default data
+
     return {
       labels: months,
       datasets: [

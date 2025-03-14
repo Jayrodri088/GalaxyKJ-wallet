@@ -23,9 +23,10 @@ import { Badge } from "@/components/ui/badge"
 import { StarBackground } from "@/components/star-background"
 import { NewAutomationForm } from "@/components/new-automation-form"
 import { FinancialImpactChart } from "@/components/financial-impact-chart"
+import type { Automation } from "@/types/automation"
 
-// Sample automation data
-const automationData = [
+
+const automationData: Automation[] = [
   {
     id: "auto-001",
     type: "payment",
@@ -102,9 +103,9 @@ export function AutomationCenter() {
   const router = useRouter()
   const [showNewForm, setShowNewForm] = useState(false)
   const [expandedAutomation, setExpandedAutomation] = useState<string | null>(null)
-  const [automations, setAutomations] = useState(automationData)
-  // Add a new state to track which automation is being edited
-  const [editingAutomation, setEditingAutomation] = useState(null)
+  const [automations, setAutomations] = useState<Automation[]>(automationData)
+
+  const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null)
 
   const toggleAutomation = (id: string) => {
     setAutomations(automations.map((auto) => (auto.id === id ? { ...auto, active: !auto.active } : auto)))
@@ -140,9 +141,9 @@ export function AutomationCenter() {
     }).format(date)
   }
 
-  const getNextExecutionText = (automation: any) => {
+  const getNextExecutionText = (automation: Automation) => {
     if (automation.type === "payment") {
-      return `Próximo pago: ${formatDate(automation.nextExecution)}`
+      return `Próximo pago: ${formatDate(automation.nextExecution!)}`
     } else if (automation.type === "swap") {
       return "Se ejecuta cuando se cumpla la condición"
     } else if (automation.type === "rule") {
@@ -151,7 +152,7 @@ export function AutomationCenter() {
     return ""
   }
 
-  const handleCreateAutomation = (newAutomation: any) => {
+  const handleCreateAutomation = (newAutomation: Automation) => {
     const id = `auto-${(automations.length + 1).toString().padStart(3, "0")}`
     setAutomations([
       ...automations,
@@ -166,16 +167,16 @@ export function AutomationCenter() {
     setShowNewForm(false)
   }
 
-  // Add this function after the handleCreateAutomation function
-  const handleEditAutomation = (updatedAutomation) => {
+ 
+  const handleEditAutomation = (updatedAutomation: Automation) => {
     setAutomations(
       automations.map((auto) => (auto.id === updatedAutomation.id ? { ...auto, ...updatedAutomation } : auto)),
     )
     setEditingAutomation(null)
   }
 
-  // Add this function to start editing an automation
-  const startEditing = (automation) => {
+  
+  const startEditing = (automation: Automation) => {
     setEditingAutomation(automation)
     setExpandedAutomation(null)
   }
@@ -185,7 +186,7 @@ export function AutomationCenter() {
       <StarBackground />
 
       <div className="relative z-10 container mx-auto px-4 py-6">
-        {/* Header */}
+
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
             <Button
@@ -215,7 +216,7 @@ export function AutomationCenter() {
           </Button>
         </header>
 
-        {/* New Automation Form */}
+
         <AnimatePresence>
           {showNewForm && (
             <motion.div
@@ -283,9 +284,8 @@ export function AutomationCenter() {
           )}
         </AnimatePresence>
 
-        {/* Automations List */}
+  
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Active Automations */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="border-gray-800 bg-gradient-to-br from-gray-900/90 to-gray-950/90 backdrop-blur-sm">
               <CardHeader className="pb-2">
@@ -341,7 +341,7 @@ export function AutomationCenter() {
                                   <p className="text-sm text-gray-400 mt-1">{automation.description}</p>
                                   <div className="flex items-center gap-2 mt-2">
                                     <span className="text-xs text-gray-500">{getNextExecutionText(automation)}</span>
-                                    {automation.executionCount > 0 && (
+                                    {(automation.executionCount ?? 0) > 0 && (
                                       <Badge
                                         variant="outline"
                                         className="text-xs bg-gray-800/50 text-gray-400 border-gray-700"
@@ -355,7 +355,7 @@ export function AutomationCenter() {
                               <div className="flex items-center gap-3">
                                 <Switch
                                   checked={automation.active}
-                                  onCheckedChange={() => toggleAutomation(automation.id)}
+                                  onCheckedChange={() => toggleAutomation(automation.id!)}
                                   className="data-[state=checked]:bg-purple-600"
                                 />
                                 <Button
@@ -363,7 +363,7 @@ export function AutomationCenter() {
                                   size="icon"
                                   className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-800/50"
                                   onClick={() =>
-                                    setExpandedAutomation(expandedAutomation === automation.id ? null : automation.id)
+                                    setExpandedAutomation(expandedAutomation === automation.id ? null : automation.id ?? null)
                                   }
                                 >
                                   {expandedAutomation === automation.id ? (
@@ -375,7 +375,6 @@ export function AutomationCenter() {
                               </div>
                             </div>
 
-                            {/* Expanded Details */}
                             <AnimatePresence>
                               {expandedAutomation === automation.id && (
                                 <motion.div
@@ -457,7 +456,7 @@ export function AutomationCenter() {
                                             <span className="text-sm text-gray-400">Umbral</span>
                                             <span className="text-sm">
                                               {typeof automation.threshold === "number" && automation.threshold < 0
-                                                ? `${Math.abs(automation.threshold)}% de caída`
+                                                ? `${Math.abs(Number(automation.threshold))}% de caída`
                                                 : `${automation.threshold} ${automation.asset}`}
                                             </span>
                                           </div>
@@ -478,7 +477,7 @@ export function AutomationCenter() {
 
                                       <div className="flex justify-between">
                                         <span className="text-sm text-gray-400">Creada</span>
-                                        <span className="text-sm">{formatDate(automation.createdAt)}</span>
+                                        <span className="text-sm">{formatDate(automation.createdAt!)}</span>
                                       </div>
                                     </div>
 
@@ -492,8 +491,8 @@ export function AutomationCenter() {
                                         <div className="flex items-center gap-2 text-xs text-yellow-500/90 bg-yellow-500/5 rounded-md p-3">
                                           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                                           <p>
-                                            Esta automatización utilizará aproximadamente {automation.amount * 12}{" "}
-                                            {automation.asset} al año.
+                                            Esta automatización utilizará aproximadamente{" "}
+                                            {Number(automation.amount) * 12} {automation.asset} al año.
                                           </p>
                                         </div>
                                       )}
@@ -505,7 +504,7 @@ export function AutomationCenter() {
                                       variant="outline"
                                       size="sm"
                                       className="h-9 border-gray-700 bg-gray-800/50 hover:bg-gray-800 text-gray-300"
-                                      onClick={() => deleteAutomation(automation.id)}
+                                      onClick={() => deleteAutomation(automation.id!)}
                                     >
                                       <Trash2 className="h-4 w-4 mr-1" />
                                       Eliminar
@@ -532,7 +531,6 @@ export function AutomationCenter() {
             </Card>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
             <Card className="border-gray-800 bg-gradient-to-br from-gray-900/90 to-gray-950/90 backdrop-blur-sm">
               <CardHeader className="pb-2">
@@ -575,7 +573,7 @@ export function AutomationCenter() {
                     <div className="space-y-2">
                       {automations
                         .filter((a) => a.active && a.type === "payment" && a.nextExecution)
-                        .sort((a, b) => new Date(a.nextExecution).getTime() - new Date(b.nextExecution).getTime())
+                        .sort((a, b) => new Date(a.nextExecution!).getTime() - new Date(b.nextExecution!).getTime())
                         .slice(0, 3)
                         .map((automation) => (
                           <div
@@ -587,7 +585,7 @@ export function AutomationCenter() {
                               <span className="text-sm truncate max-w-[150px]">{automation.name}</span>
                             </div>
                             <span className="text-xs text-gray-400">
-                              {new Date(automation.nextExecution).toLocaleDateString("es-ES", {
+                              {new Date(automation.nextExecution!).toLocaleDateString("es-ES", {
                                 day: "2-digit",
                                 month: "short",
                               })}

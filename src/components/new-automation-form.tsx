@@ -11,59 +11,75 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { FinancialImpactChart } from "@/components/financial-impact-chart"
 import { Badge } from "@/components/ui/badge"
+import type { Automation } from "@/types/automation"
 
-// Update the component name and props to support editing
-export function NewAutomationForm({ automation = null, isEditing = false, onSubmit, onCancel }) {
-  // Initialize form data with existing automation data if in edit mode
+interface NewAutomationFormProps {
+  automation?: Automation | null
+  isEditing?: boolean
+  onSubmit: (automation: Automation) => void
+  onCancel: () => void
+}
+
+export function NewAutomationForm({
+  automation = null,
+  isEditing = false,
+  onSubmit,
+  onCancel,
+}: NewAutomationFormProps) {
+
   const [step, setStep] = useState(isEditing ? 2 : 1)
-  const [automationType, setAutomationType] = useState(isEditing ? automation.type : "payment")
-  const [formData, setFormData] = useState(
-    isEditing
+  const [automationType, setAutomationType] = useState(isEditing && automation ? automation.type : "payment")
+  const [formData, setFormData] = useState<Automation>(
+    isEditing && automation
       ? { ...automation }
       : {
-          type: "payment",
+          type: "payment", 
           name: "",
           description: "",
-          // Payment fields
+          
+
           recipient: "",
           asset: "XLM",
           amount: "",
           frequency: "monthly",
           memo: "",
-          // Swap fields
+  
+
           assetFrom: "XLM",
           assetTo: "USDC",
           amountFrom: "",
           condition: "price_increase",
           conditionValue: "",
-          // Rule fields
-          asset: "XLM",
+  
+
           threshold: "",
           action: "alert",
-        },
-  )
+  
 
-  const handleInputChange = (field, value) => {
+          active: true,
+          createdAt: new Date().toISOString(),
+          executionCount: 0,
+        }
+  );
+  
+  
+
+  const handleInputChange = (field: keyof Automation, value: string | number) => {
     setFormData({
       ...formData,
       [field]: value,
     })
   }
 
-  // Update handleTypeChange to work with editing
-  const handleTypeChange = (type) => {
-    if (!isEditing) {
-      setAutomationType(type)
-      setFormData({
-        ...formData,
-        type,
-      })
-    }
-  }
 
-  // Update handleSubmit to work with editing
+  const handleTypeChange = (value: "payment" | "swap" | "rule") => {
+    setAutomationType(value);
+  };
+  
+
+
   const handleSubmit = () => {
-    // Create description based on type
+
     let description = ""
     if (formData.type === "payment") {
       description = `Envía ${formData.amount} ${formData.asset} ${
@@ -93,7 +109,7 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
       }`
     }
 
-    // Add next execution date for payments
+
     let nextExecution = null
     if (formData.type === "payment") {
       const now = new Date()
@@ -106,10 +122,10 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
       }
     }
 
-    const updatedData = {
+    const updatedData: Automation = {
       ...formData,
       description,
-      nextExecution: nextExecution ? nextExecution.toISOString() : null,
+      nextExecution: nextExecution ? nextExecution.toISOString() : undefined,
     }
 
     onSubmit(updatedData)
@@ -140,10 +156,10 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
     setStep(step + 1)
   }
 
-  // Update the component to show different UI based on edit mode
+  
   return (
     <div className="space-y-6">
-      {/* Step indicator - only show in create mode */}
+
       {!isEditing && (
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -175,7 +191,7 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
         </div>
       )}
 
-      {/* Step 1: Basic Info - only show in create mode */}
+
       {!isEditing && step === 1 && (
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -197,7 +213,7 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
 
             <div className="space-y-2">
               <Label>Tipo de Automatización</Label>
-              <Tabs defaultValue="payment" value={automationType} onValueChange={handleTypeChange} className="w-full">
+              <Tabs defaultValue="payment" value={automationType} onValueChange={(value) => handleTypeChange(value as "payment" | "swap" | "rule")} className="w-full">
                 <TabsList className="grid w-full grid-cols-3 bg-gray-800/50">
                   <TabsTrigger value="payment" className="data-[state=active]:bg-blue-900/50">
                     <Clock className="h-4 w-4 mr-2" />
@@ -233,7 +249,7 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
         </motion.div>
       )}
 
-      {/* Step 2: Configuration */}
+
       {(step === 2 || isEditing) && (
         <motion.div
           initial={{ opacity: 0, x: isEditing ? 0 : 20 }}
@@ -241,7 +257,7 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
         >
-          {/* Add name field at the top when editing */}
+ 
           {isEditing && (
             <div className="space-y-2 mb-6">
               <Label htmlFor="automation-name">Nombre de la Automatización</Label>
@@ -255,7 +271,7 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
             </div>
           )}
 
-          {/* Type indicator when editing */}
+
           {isEditing && (
             <div className="mb-6">
               <Label className="mb-2 block">Tipo de Automatización</Label>
@@ -330,7 +346,10 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
 
               <div className="space-y-2">
                 <Label htmlFor="frequency">Frecuencia</Label>
-                <Select value={formData.frequency} onValueChange={(value) => handleInputChange("frequency", value)}>
+                <Select
+                  value={formData.frequency}
+                  onValueChange={(value) => handleInputChange("frequency", value as "daily" | "weekly" | "monthly")}
+                >
                   <SelectTrigger id="frequency" className="bg-gray-800/50 border-gray-700 focus:border-purple-500">
                     <SelectValue placeholder="Seleccionar frecuencia" />
                   </SelectTrigger>
@@ -403,7 +422,12 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
 
               <div className="space-y-2">
                 <Label htmlFor="condition">Condición</Label>
-                <Select value={formData.condition} onValueChange={(value) => handleInputChange("condition", value)}>
+                <Select
+                  value={formData.condition}
+                  onValueChange={(value) =>
+                    handleInputChange("condition", value as "price_increase" | "price_decrease" | "price_target")
+                  }
+                >
                   <SelectTrigger id="condition" className="bg-gray-800/50 border-gray-700 focus:border-purple-500">
                     <SelectValue placeholder="Seleccionar condición" />
                   </SelectTrigger>
@@ -483,7 +507,10 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
 
               <div className="space-y-2">
                 <Label htmlFor="action">Acción</Label>
-                <Select value={formData.action} onValueChange={(value) => handleInputChange("action", value)}>
+                <Select
+                  value={formData.action}
+                  onValueChange={(value) => handleInputChange("action", value as "alert" | "buy" | "sell" | "custom")}
+                >
                   <SelectTrigger id="action" className="bg-gray-800/50 border-gray-700 focus:border-purple-500">
                     <SelectValue placeholder="Seleccionar acción" />
                   </SelectTrigger>
@@ -514,7 +541,7 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
         </motion.div>
       )}
 
-      {/* Step 3: Review - only show in create mode */}
+
       {!isEditing && step === 3 && (
         <motion.div
           initial={{ opacity: 0, x: 20 }}
@@ -586,10 +613,10 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
                   <p>
                     Esta automatización utilizará aproximadamente{" "}
                     {formData.frequency === "daily"
-                      ? formData.amount * 365
+                      ? Number(formData.amount) * 365
                       : formData.frequency === "weekly"
-                        ? formData.amount * 52
-                        : formData.amount * 12}{" "}
+                        ? Number(formData.amount) * 52
+                        : Number(formData.amount) * 12}{" "}
                     {formData.asset} al año.
                   </p>
                 </div>
@@ -599,7 +626,7 @@ export function NewAutomationForm({ automation = null, isEditing = false, onSubm
         </motion.div>
       )}
 
-      {/* Navigation buttons */}
+
       <div className="flex justify-between pt-4 border-t border-gray-800">
         {isEditing || step > 1 ? (
           <Button

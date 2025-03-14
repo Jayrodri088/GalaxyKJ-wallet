@@ -126,7 +126,7 @@ export function Wallet() {
 
               <Button
                 className="h-20 bg-gradient-to-br from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 border-0 rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-300 hover:shadow-[0_0_15px_rgba(245,158,11,0.5)]"
-                onClick={() => router.push("/automate")}
+                onClick={() => router.push("/automation")}
               >
                 <Zap className="h-6 w-6" />
                 <span>Automate</span>

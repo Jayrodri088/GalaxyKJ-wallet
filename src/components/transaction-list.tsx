@@ -4,8 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, ArrowDownLeft, RefreshCw, Filter, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, RefreshCw, Filter } from "lucide-react";
 
 type TransactionType = "receive" | "send" | "swap";
 type TransactionStatus = "completed" | "pending" | "failed";
@@ -67,8 +66,7 @@ const transactions: Transaction[] = [
 
 export function TransactionHistory() {
   const [filter, setFilter] = useState<"all" | TransactionType>("all");
-
-  const router = useRouter(); 
+  const router = useRouter();
 
   const filteredTransactions =
     filter === "all" ? transactions : transactions.filter((t) => t.type === filter);
@@ -87,8 +85,34 @@ export function TransactionHistory() {
     router.push("/transactions");
   };
 
+  const getTransactionIcon = (type: TransactionType) => {
+    switch (type) {
+      case "receive":
+        return <ArrowDownLeft className="h-4 w-4 text-[#10B981]" />;
+      case "send":
+        return <ArrowUpRight className="h-4 w-4 text-[#60A5FA]" />;
+      case "swap":
+        return <RefreshCw className="h-4 w-4 text-[#A78BFA]" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusColor = (status: TransactionStatus) => {
+    switch (status) {
+      case "completed":
+        return "bg-[#059669] bg-opacity-20 text-[#34D399]";
+      case "pending":
+        return "bg-[#D97706] bg-opacity-20 text-[#FBBF24]";
+      case "failed":
+        return "bg-[#DC2626] bg-opacity-20 text-[#F87171]";
+      default:
+        return "bg-gray-600 bg-opacity-20 text-gray-400";
+    }
+  };
+
   return (
-    <Card className="border-gray-800 bg-gradient-to-br from-gray-900 to-gray-950">
+    <Card className="bg-[#0F1225] border-gray-800">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-medium text-gray-300">Transaction History</CardTitle>
         <Button
@@ -127,20 +151,14 @@ export function TransactionHistory() {
           {filteredTransactions.map((tx) => (
             <div
               key={tx.id}
-              className="p-3 rounded-lg bg-gray-800/30 hover:bg-gray-800/50 transition-all duration-200 cursor-pointer flex items-center justify-between group"
+              className="p-3 rounded-lg bg-[#1F2937] bg-opacity-20 hover:bg-opacity-30 transition-all duration-200 cursor-pointer flex items-center justify-between group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
-                  {tx.type === "receive" ? (
-                    <ArrowDownLeft className="h-4 w-4 text-green-400" />
-                  ) : tx.type === "send" ? (
-                    <ArrowUpRight className="h-4 w-4 text-blue-400" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4 text-purple-400" />
-                  )}
+                <div className="w-10 h-10 rounded-full bg-[#1F2937] bg-opacity-50 flex items-center justify-center">
+                  {getTransactionIcon(tx.type)}
                 </div>
                 <div>
-                  <div className="font-medium flex items-center">
+                  <div className="font-medium text-gray-200">
                     {tx.type === "swap" ? (
                       <span>
                         {tx.assetFrom} → {tx.assetTo}
@@ -155,34 +173,22 @@ export function TransactionHistory() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <div className="font-medium">
-                    {tx.type === "swap" ? (
-                      <span>
-                        {tx.amountFrom} → {tx.amountTo}
-                      </span>
-                    ) : (
-                      <span className={tx.type === "receive" ? "text-green-400" : ""}>
-                        {tx.type === "receive" ? "+" : "-"}
-                        {tx.amount}
-                      </span>
-                    )}
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs ${
-                      tx.status === "completed"
-                        ? "bg-green-900/30 text-green-400 border-green-800"
-                        : tx.status === "pending"
-                        ? "bg-yellow-900/30 text-yellow-400 border-yellow-800"
-                        : "bg-red-900/30 text-red-400 border-red-800"
-                    }`}
-                  >
-                    {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                  </Badge>
+              <div className="text-right">
+                <div className="font-medium text-gray-200">
+                  {tx.type === "swap" ? (
+                    <span>
+                      {tx.amountFrom} → {tx.amountTo}
+                    </span>
+                  ) : (
+                    <span className={tx.type === "receive" ? "text-[#10B981]" : "text-[#60A5FA]"}>
+                      {tx.type === "receive" ? "+" : "-"}
+                      {tx.amount}
+                    </span>
+                  )}
                 </div>
-                <ChevronRight className="h-4 w-4 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className={`text-xs px-2 py-1 rounded-full inline-block ${getStatusColor(tx.status)}`}>
+                  {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
+                </div>
               </div>
             </div>
           ))}

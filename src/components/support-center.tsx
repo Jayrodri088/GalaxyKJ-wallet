@@ -19,7 +19,14 @@ export function SupportCenter() {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("faq")
 
-  // Sample FAQ data
+
+  enum Status {
+    Resolved = "resolved",
+    InProgress = "in-progress",
+    Pending = "pending",
+  }
+
+
   const faqCategories = [
     {
       id: "account",
@@ -86,7 +93,7 @@ export function SupportCenter() {
     },
   ]
 
-  // Sample support tickets
+  
   const supportTickets = [
     {
       id: "TK-001",
@@ -114,7 +121,7 @@ export function SupportCenter() {
     },
   ]
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: Status) => {
     switch (status) {
       case "resolved":
         return (
@@ -142,18 +149,19 @@ export function SupportCenter() {
     }
   }
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
+  const formatDate = (dateString: string | number | Date): string => {
+    const date = new Date(dateString);
+  
     return new Intl.DateTimeFormat("en-US", {
       day: "numeric",
       month: "short",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).format(date)
-  }
+    }).format(date);
+  };
 
-  // Filter FAQs based on search query
+
   const filteredFAQs = searchQuery
     ? faqCategories
         .map((category) => ({
@@ -172,7 +180,7 @@ export function SupportCenter() {
       <StarBackground />
 
       <div className="relative z-10 container mx-auto px-4 py-6">
-        {/* Header */}
+
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
             <Button
@@ -206,7 +214,7 @@ export function SupportCenter() {
           </motion.div>
         </header>
 
-        {/* Search Bar */}
+
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
@@ -227,9 +235,9 @@ export function SupportCenter() {
           )}
         </div>
 
-        {/* Main Content */}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - FAQ and Tickets */}
+
           <div className="lg:col-span-2 space-y-6">
             <Card className="border-gray-800 bg-gradient-to-br from-gray-900/90 to-gray-950/90 backdrop-blur-sm">
               <CardHeader className="pb-2">
@@ -302,7 +310,7 @@ export function SupportCenter() {
                                   <div>
                                     <div className="flex items-center gap-2">
                                       <h4 className="font-medium">{ticket.title}</h4>
-                                      {getStatusBadge(ticket.status)}
+                                      {getStatusBadge(ticket.status as Status)}
                                     </div>
                                     <p className="text-sm text-gray-400 mt-1">{ticket.description}</p>
                                     <div className="flex items-center gap-2 mt-2">
@@ -331,7 +339,7 @@ export function SupportCenter() {
             </Card>
           </div>
 
-          {/* Right Column - Quick Links and Resources */}
+
           <div className="space-y-6">
             <Card className="border-gray-800 bg-gradient-to-br from-gray-900/90 to-gray-950/90 backdrop-blur-sm">
               <CardHeader className="pb-2">
@@ -478,7 +486,7 @@ export function SupportCenter() {
         </div>
       </div>
 
-      {/* AI Chatbot */}
+
       <AnimatePresence>{showChatbot && <AIChatbot onClose={() => setShowChatbot(false)} />}</AnimatePresence>
     </div>
   )

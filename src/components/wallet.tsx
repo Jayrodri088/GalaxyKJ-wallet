@@ -2,7 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Send, ReceiptIcon as ReceiveIcon, Repeat, Search, Menu, Zap, HelpCircle } from "lucide-react";
+import {
+  Send,
+  ReceiptIcon as ReceiveIcon,
+  Repeat,
+  Search,
+  Menu,
+  Zap,
+  HelpCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,13 +54,19 @@ export function Wallet() {
               variant="ghost"
               size="sm"
               className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all duration-300"
+              onClick={() => router.push("/support")}
             >
               <HelpCircle className="h-4 w-4 text-purple-400" />
               <span>Support</span>
             </Button>
           </div>
 
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
             <Menu className="h-6 w-6" />
           </Button>
         </header>
@@ -67,9 +81,13 @@ export function Wallet() {
               />
             </div>
             <div className="space-y-2">
-              <Button variant="ghost" className="w-full justify-start">Dashboard</Button>
-              <Button variant="ghost" className="w-full justify-start">Settings</Button>
               <Button variant="ghost" className="w-full justify-start">
+                Dashboard
+              </Button>
+              <Button variant="ghost" className="w-full justify-start">
+                Settings
+              </Button>
+              <Button variant="ghost" className="w-full justify-start"  onClick={() => router.push("/support")}>
                 <HelpCircle className="h-4 w-4 mr-2 text-purple-400" />
                 Support
               </Button>
@@ -123,11 +141,25 @@ export function Wallet() {
           <div className="space-y-6">
             <Tabs defaultValue="ai" className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-gray-900/50">
-                <TabsTrigger value="ai" className="data-[state=active]:bg-purple-900/50">AI Insights</TabsTrigger>
-                <TabsTrigger value="security" className="data-[state=active]:bg-purple-900/50">Security</TabsTrigger>
+                <TabsTrigger
+                  value="ai"
+                  className="data-[state=active]:bg-purple-900/50"
+                >
+                  AI Insights
+                </TabsTrigger>
+                <TabsTrigger
+                  value="security"
+                  className="data-[state=active]:bg-purple-900/50"
+                >
+                  Security
+                </TabsTrigger>
               </TabsList>
-              <TabsContent value="ai" className="mt-4"><AiRecommendations /></TabsContent>
-              <TabsContent value="security" className="mt-4"><SecurityOptions /></TabsContent>
+              <TabsContent value="ai" className="mt-4">
+                <AiRecommendations />
+              </TabsContent>
+              <TabsContent value="security" className="mt-4">
+                <SecurityOptions />
+              </TabsContent>
             </Tabs>
           </div>
         </div>

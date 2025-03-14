@@ -5,5 +5,5 @@ export default function SupportPage() {
     <main className="min-h-screen">
       <SupportCenter />
     </main>
-  )
+  );
 }

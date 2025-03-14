@@ -41,21 +41,23 @@ export function AIChatbot({ onClose }: { onClose: () => void }) {
       role: "assistant",
       content: "Hello! I'm the Galaxy Wallet assistant. How can I help you today?",
     },
-  ])
-  const [input, setInput] = useState("")
-  const [isTyping, setIsTyping] = useState(false)
-  const messagesEndRef = useRef(null)
-  const inputRef = useRef(null)
+  ]);
 
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    const messagesEndRef = useRef<HTMLDivElement | null>(null)
-  }, [messages])
-
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   useEffect(() => {
     setTimeout(() => {
-        const inputRef = useRef<HTMLInputElement | null>(null)
+      inputRef.current?.focus(); 
     }, 100)
   }, [])
 

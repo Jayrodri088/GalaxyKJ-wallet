@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 
-// Sample predefined questions
+
 const predefinedQuestions = [
   "How do I reset my private key?",
   "How do I perform a swap on Stellar?",
@@ -16,7 +16,7 @@ const predefinedQuestions = [
   "How do I recover my seed phrase?",
 ]
 
-// Sample responses for the AI
+
 const sampleResponses: Record<string, string> = {
     "How do I reset my private key?":
       "To reset your private key, you'll need your 12-word seed phrase. Follow these steps:\n\n1. Go to the home screen\n2. Select 'Recover Wallet'\n3. Enter your seed phrase\n4. Create a new password\n\nRemember that without your seed phrase, you won't be able to reset your private key due to the decentralized nature of the blockchain.",
@@ -47,12 +47,12 @@ export function AIChatbot({ onClose }: { onClose: () => void }) {
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
 
-  // Auto-scroll to bottom of messages
+
   useEffect(() => {
     const messagesEndRef = useRef<HTMLDivElement | null>(null)
   }, [messages])
 
-  // Focus input on mount
+
   useEffect(() => {
     setTimeout(() => {
         const inputRef = useRef<HTMLInputElement | null>(null)
@@ -62,17 +62,17 @@ export function AIChatbot({ onClose }: { onClose: () => void }) {
   const handleSend = async () => {
     if (input.trim() === "") return
 
-    // Add user message
+
     const userMessage = { role: "user", content: input }
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsTyping(true)
 
-    // Simulate AI thinking
+
     setTimeout(() => {
       let response
 
-      // Check if we have a predefined response
+
       const matchedQuestion = Object.keys(sampleResponses).find((q) =>
         input.toLowerCase().includes(q.toLowerCase().substring(0, 10)),
       )
@@ -80,7 +80,7 @@ export function AIChatbot({ onClose }: { onClose: () => void }) {
       if (matchedQuestion) {
         response = sampleResponses[matchedQuestion];
       } else {
-        // Generic response if no match
+
         response =
           "I understand your query. For more detailed information on this topic, I would recommend checking our documentation or opening a support ticket so our team can assist you personally."
       }
@@ -112,7 +112,7 @@ export function AIChatbot({ onClose }: { onClose: () => void }) {
       transition={{ duration: 0.3 }}
       className="fixed bottom-0 right-0 z-50 w-full md:w-96 h-[600px] md:h-[500px] md:mr-6 md:mb-6 rounded-t-lg md:rounded-lg overflow-hidden shadow-2xl flex flex-col"
     >
-      {/* Header */}
+
       <div className="bg-gradient-to-r from-[#3B82F6] to-[#9333EA] p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -130,7 +130,6 @@ export function AIChatbot({ onClose }: { onClose: () => void }) {
         </Button>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 bg-[#0D0D22] space-y-4">
         {messages.map((message, index) => (
           <div key={index} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -171,7 +170,7 @@ export function AIChatbot({ onClose }: { onClose: () => void }) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Questions */}
+
       <div className="bg-gray-900 p-2 overflow-x-auto whitespace-nowrap scrollbar-thin">
         <div className="flex gap-2">
           {predefinedQuestions.map((question, index) => (
@@ -188,7 +187,7 @@ export function AIChatbot({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* Input */}
+
       <div className="p-4 bg-gray-900 border-t border-gray-800 flex gap-2">
         <Input
           ref={inputRef}

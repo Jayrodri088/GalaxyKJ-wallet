@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { StarBackground } from "@/components/star-background"
+import { StarBackground } from "@/components/effects/star-background"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ChevronRight, Shield, Zap, RefreshCw, Globe } from "lucide-react"

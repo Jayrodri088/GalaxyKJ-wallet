@@ -4,9 +4,9 @@ import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
-import { StarBackground } from "@/components/star-background"
-import { SendForm } from "@/components/send-form"
-import { ReceiveForm } from "@/components/receive-form"
+import { StarBackground } from "@/components/effects/star-background"
+import { SendForm } from "@/components/send-receive/send-form"
+import { ReceiveForm } from "@/components/send-receive/receive-form"
 import { ArrowLeft } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 

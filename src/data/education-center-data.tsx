@@ -1,8 +1,3 @@
-
-
-
-
-
 const securityProps = [
     {
         heading: "Cryptocurrency Security Checklist",

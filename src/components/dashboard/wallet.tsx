@@ -14,12 +14,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BalanceDisplay } from "@/components/balance-display";
-import { FinancialCharts } from "@/components/financial-charts";
-import { TransactionHistory } from "@/components/transaction-history";
-import { AiRecommendations } from "@/components/ai-recommendations";
-import { SecurityOptions } from "@/components/security-options";
-import { StarBackground } from "@/components/star-background";
+import { BalanceDisplay } from "@/components/dashboard/balance-display";
+import { FinancialCharts } from "@/components/dashboard/financial-charts";
+import { TransactionHistory } from "@/components/dashboard/transaction-history";
+import { AiRecommendations } from "@/components/dashboard/ai-recommendations";
+import { SecurityOptions } from "@/components/dashboard/security-options";
+import { StarBackground } from "@/components/effects/star-background";
 import { useMobile } from "@/hooks/use-mobile";
 
 export function Wallet() {

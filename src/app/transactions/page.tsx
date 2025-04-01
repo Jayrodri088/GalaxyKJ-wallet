@@ -1,42 +1,9 @@
-"use client";
+import Transactions from "@/components/transactions/transactions";
 
-import { TransactionHistory } from "@/components/transaction-list";
-import { ActivitySummary } from "@/components/activity-summary";
-import { TransactionStats } from "@/components/transaction-stats";
-import { SearchBar } from "@/components/search-bar";
-import { StarBackground } from "@/components/star-background";
-import { ChevronLeft } from "lucide-react";
-import Link from "next/link";
-
-export default function TransactionsPage() {
+export default function SupportPage() {
   return (
-    <div className="min-h-screen bg-[#0A0B1E] text-white">
-      <StarBackground />
-      <div className="relative z-10">
-        <div className="max-w-[1400px] mx-auto px-8 py-6">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard" className="hover:text-purple-400">
-                <ChevronLeft className="h-6 w-6" />
-              </Link>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-[#60A5FA] to-[#A78BFA] bg-clip-text text-transparent">
-                Transaction History
-              </h1>
-            </div>
-            <SearchBar />
-          </div>
-
-          <div className="grid grid-cols-12 gap-6">
-            <div className="col-span-12 lg:col-span-8">
-              <TransactionHistory />
-            </div>
-            <div className="col-span-12 lg:col-span-4 space-y-6">
-              <ActivitySummary />
-              <TransactionStats />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <main className="min-h-screen">
+      <Transactions />
+    </main>
   );
 }

@@ -20,9 +20,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { StarBackground } from "@/components/star-background";
-import { NewAutomationForm } from "@/components/new-automation-form";
-import { FinancialImpactChart } from "@/components/financial-impact-chart";
+import { StarBackground } from "@/components/effects/star-background";
+import { NewAutomationForm } from "@/components/automation/new-automation-form";
+import { FinancialImpactChart } from "@/components/automation/financial-impact-chart";
 import type { Automation } from "@/types/automation";
 
 const automationData: Automation[] = [

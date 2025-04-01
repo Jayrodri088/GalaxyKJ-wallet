@@ -1,6 +1,6 @@
 "use client";
 
-import SecurityResources from "@/components/security-resources";
+import SecurityResources from "@/components/education-center/security-resources";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Book, BookOpen, CircleHelp, NotepadText, Shield, Trash } from "lucide-react";

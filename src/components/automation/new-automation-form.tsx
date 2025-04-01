@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { FinancialImpactChart } from "@/components/financial-impact-chart"
+import { FinancialImpactChart } from "@/components/automation/financial-impact-chart"
 import { Badge } from "@/components/ui/badge"
 import type { Automation } from "@/types/automation"
 

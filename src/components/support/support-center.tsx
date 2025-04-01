@@ -9,8 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { StarBackground } from "@/components/star-background"
-import { AIChatbot } from "@/components/ai-chatbot"
+import { StarBackground } from "@/components/effects/star-background"
+import { AIChatbot } from "@/components/support/ai-chatbot"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 export function SupportCenter() {

@@ -1,4 +1,4 @@
-import { Wallet } from "@/components/wallet"
+import { Wallet } from "@/components/dashboard/wallet"
 
 export default function DashboardPage() {
   return (

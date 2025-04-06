@@ -33,7 +33,7 @@ export function WelcomeScreen() {
     <div ref={containerRef} className="relative w-full min-h-screen bg-[#0A0A1A] text-white overflow-hidden">
       <StarBackground />
       <ShootingStarsEffect />
-
+      
       <Header onCreateWallet={handleCreateWallet} isCreating={isCreating} />
       <HeroSection scrollYProgress={scrollYProgress} />
       <FeatureSection />

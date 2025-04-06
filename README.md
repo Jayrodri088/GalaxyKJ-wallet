@@ -59,5 +59,3 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
 ## 🤝 Contributing
 
 We appreciate all contributions to improve **Galaxy Smart Wallet**! Before you start, please check our **[Contribution Guidelines](docs/CONTRIBUTORS_GUIDELINE.md)** to follow best practices for branching, commits, and collaboration.
-
----

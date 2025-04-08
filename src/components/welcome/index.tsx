@@ -17,6 +17,7 @@ export function WelcomeScreen() {
   const router = useRouter()
   const isMobile = useMobile()
   const containerRef = useRef(null)
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
@@ -25,25 +26,25 @@ export function WelcomeScreen() {
   const { createWallet, isCreating } = useCreateWallet()
 
   const handleCreateWallet = async () => {
-    console.log("🛠 Wallet creation started...");
-    const wallet = await createWallet();
-  
+    if (isCreating) return 
+
+    console.log("🛠 Wallet creation started...")
+    const wallet = await createWallet()
+
     if (!wallet) {
-      console.log("❌ Wallet creation failed or returned null");
-      return;
+      console.error("❌ Wallet creation failed")
+      return
     }
-  
-    console.log("✅ Wallet created:", wallet);
-    console.log("🔁 Redirecting to /dashboard...");
-    router.push("/dashboard");
-  };
-  
+
+    console.log("✅ Wallet created:", wallet)
+    router.push("/dashboard")
+  }
 
   return (
     <div ref={containerRef} className="relative w-full min-h-screen bg-[#0A0A1A] text-white overflow-hidden">
       <StarBackground />
       <ShootingStarsEffect />
-      
+
       <Header onCreateWallet={handleCreateWallet} isCreating={isCreating} />
       <HeroSection scrollYProgress={scrollYProgress} />
       <FeatureSection />

@@ -1,5 +1,5 @@
-import { Keypair, Server } from 'stellar-sdk';
-import { STELLAR_CONFIG } from './config';
+import { Keypair, Server } from "stellar-sdk";
+import { STELLAR_CONFIG } from "./config";
 
 export async function createStellarAccount() {
   const keypair = Keypair.random();
@@ -16,16 +16,13 @@ export async function createStellarAccount() {
 
     const account = await server.loadAccount(publicKey);
 
-    const result = {
+    return {
       publicKey,
       secretKey,
       balances: account.balances,
     };
-
-    console.log('✅ Account created:', result);
-    return result;
   } catch (err: any) {
-    console.error('❌ Error creating account:', err.message || err);
+    console.error("❌ Error creating account:", err.message || err);
     throw err;
   }
 }

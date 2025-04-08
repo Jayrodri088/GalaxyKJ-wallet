@@ -8,7 +8,7 @@ export const STELLAR_CONFIG = {
   },
   mainnet: {
     horizonURL: 'https://horizon.stellar.org',
-    friendbotURL: '', // no friendbot on mainnet
+    friendbotURL: '',
     networkPassphrase: 'Public Global Stellar Network ; September 2015',
   },
 }[STELLAR_NETWORK];

@@ -4,13 +4,21 @@ import { useState } from "react";
 import { Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useWalletBalance } from "@/hooks/use-wallet-balance";
 
 export function BalanceDisplay() {
   const [hideBalance, setHideBalance] = useState(false);
   const [showTokens, setShowTokens] = useState(false);
 
+  const stellarBalance = useWalletBalance();
+
   const tokens = [
-    { name: "XLM", balance: 1250.75, value: 487.79, change: 2.4 },
+    {
+      name: "XLM",
+      balance: stellarBalance ?? 0,
+      value: (stellarBalance ?? 0) * 0.39,
+      change: 1.8,
+    },
     { name: "USDC", balance: 350.0, value: 350.0, change: 0.0 },
     { name: "BTC", balance: 0.0045, value: 225.0, change: -1.2 },
     { name: "ETH", balance: 0.12, value: 312.48, change: 3.7 },
@@ -19,7 +27,7 @@ export function BalanceDisplay() {
   const totalBalance = tokens.reduce((acc, token) => acc + token.value, 0);
 
   return (
-    <Card className="border-gray-800 bg-gradient-to-br from-gray-900 to-gray-950 overflow-hidden">
+    <Card className="border-gray-800 bg-gray-900/50"> {/* ✅ Transparencia como el ejemplo */}
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-medium text-gray-300">Total Balance</h2>
@@ -34,9 +42,15 @@ export function BalanceDisplay() {
         </div>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">{hideBalance ? "••••••" : `$${totalBalance.toFixed(2)}`}</h1>
+          <h1 className="text-3xl font-bold">
+            {hideBalance
+              ? "••••••"
+              : stellarBalance === null
+              ? "Loading..."
+              : `$${totalBalance.toFixed(2)}`}
+          </h1>
           <div className="flex items-center mt-1 text-sm">
-            <span className="text-green-400 mr-2">+5.2%</span>
+            <span className="text-green-400 mr-2">+1.8%</span>
             <span className="text-gray-400">Last 24h</span>
           </div>
         </div>
@@ -73,7 +87,9 @@ export function BalanceDisplay() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-medium">{hideBalance ? "•••••" : `$${token.value.toFixed(2)}`}</div>
+                  <div className="font-medium">
+                    {hideBalance ? "•••••" : `$${token.value.toFixed(2)}`}
+                  </div>
                   <div className={`text-sm ${token.change >= 0 ? "text-green-400" : "text-red-400"}`}>
                     {token.change >= 0 ? "+" : ""}
                     {token.change}%

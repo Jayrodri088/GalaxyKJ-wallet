@@ -88,7 +88,7 @@ export function TransactionHistory() {
   };
 
   return (
-    <Card className="border-gray-800 bg-gradient-to-br from-gray-900 to-gray-950">
+    <Card className="border-gray-800 bg-gray-900/50">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-medium text-gray-300">Transaction History</CardTitle>
         <Button

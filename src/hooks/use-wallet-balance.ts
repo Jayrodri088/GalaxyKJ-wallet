@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Server } from "stellar-sdk";
+import * as StellarSDK from "@stellar/stellar-sdk";
 import { useWalletStore } from "@/store/wallet-store";
 import { STELLAR_CONFIG } from "@/lib/stellar/config";
 
@@ -12,8 +12,8 @@ export function useWalletBalance() {
       if (!publicKey) return;
 
       try {
-        const server = new Server(STELLAR_CONFIG.horizonURL);
-        const account = await server.loadAccount(publicKey);
+        const server = new StellarSDK.Horizon.Server(STELLAR_CONFIG.horizonURL);
+        const account = await server.accounts().accountId(publicKey).call();
         const nativeBalance = account.balances.find((b) => b.asset_type === "native");
         setBalance(parseFloat(nativeBalance?.balance || "0"));
       } catch (error) {

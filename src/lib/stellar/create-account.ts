@@ -1,4 +1,4 @@
-import { Keypair, Server } from "stellar-sdk";
+import { Keypair } from "@stellar/stellar-sdk";
 import { STELLAR_CONFIG } from "./config";
 
 export async function createStellarAccount() {
@@ -6,23 +6,35 @@ export async function createStellarAccount() {
   const publicKey = keypair.publicKey();
   const secretKey = keypair.secret();
 
-  const server = new Server(STELLAR_CONFIG.horizonURL);
+  console.log("🆕 Creating account with publicKey:", publicKey);
 
   try {
     if (STELLAR_CONFIG.friendbotURL) {
-      const res = await fetch(`${STELLAR_CONFIG.friendbotURL}?addr=${publicKey}`);
-      if (!res.ok) throw new Error(await res.text());
+      const url = `${STELLAR_CONFIG.friendbotURL}?addr=${publicKey}`;
+      console.log("📡 Fetching friendbot URL:", url);
+      const res = await fetch(url);
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("❌ Friendbot error:", errorText);
+        throw new Error(errorText);
+      }
+      console.log("✅ Account funded by friendbot");
     }
 
+    const Stellar = await import("@stellar/stellar-sdk");
+    const server = new Stellar.Horizon.Server(STELLAR_CONFIG.horizonURL);    
     const account = await server.loadAccount(publicKey);
+
+    console.log("✅ Account exists");
+    console.log("💰 Balances:", account.balances);
 
     return {
       publicKey,
       secretKey,
       balances: account.balances,
     };
-  } catch (err: any) {
-    console.error("❌ Error creating account:", err.message || err);
-    throw err;
+  } catch (err) {
+    console.error("❌ Error in createStellarAccount:", err);
+    return null;
   }
 }

@@ -178,7 +178,7 @@ export function FinancialCharts() {
   const timeRangeOptions = ["1D", "1W", "1M", "3M", "1Y", "ALL"];
 
   return (
-    <Card className="border-gray-800 bg-gradient-to-br from-gray-900 to-gray-950">
+    <Card className="border-gray-800 bg-gray-900/50"> 
       <CardContent className="p-6">
         <Tabs defaultValue="portfolio" className="w-full">
           <div className="flex justify-between items-center mb-4">
@@ -190,7 +190,7 @@ export function FinancialCharts() {
                 Allocation
               </TabsTrigger>
             </TabsList>
-
+  
             <div className="flex gap-1">
               {timeRangeOptions.map((range) => (
                 <button
@@ -207,13 +207,13 @@ export function FinancialCharts() {
               ))}
             </div>
           </div>
-
+  
           <TabsContent value="portfolio" className="mt-0">
             <div className="h-64">
               <Line data={lineChartData} options={lineChartOptions} />
             </div>
           </TabsContent>
-
+  
           <TabsContent value="allocation" className="mt-0">
             <div className="h-64 flex items-center justify-center">
               <Doughnut data={doughnutChartData} options={doughnutChartOptions} />
@@ -222,5 +222,6 @@ export function FinancialCharts() {
         </Tabs>
       </CardContent>
     </Card>
-  );
+  )
+  
 }

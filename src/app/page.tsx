@@ -1,4 +1,4 @@
-import { WelcomeScreen } from "@/components/welcome-screen"
+import { WelcomeScreen } from "@/components/welcome/index"
 
 export default function HomePage() {
   return (

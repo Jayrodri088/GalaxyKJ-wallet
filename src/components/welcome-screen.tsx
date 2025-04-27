@@ -45,22 +45,22 @@ export function WelcomeScreen() {
 
   const benefits = [
     {
-      icon: <Shield className="h-6 w-6 text-blue-400" />, 
+      icon: <Shield className="h-6 w-6 text-blue-400" />,
       title: "Advanced Security",
       description: "Multi-signature and dynamic authentication to protect your assets",
     },
     {
-      icon: <Zap className="h-6 w-6 text-yellow-400" />, 
+      icon: <Zap className="h-6 w-6 text-yellow-400" />,
       title: "Financial AI",
       description: "Smart automation of your finances with personalized recommendations",
     },
     {
-      icon: <RefreshCw className="h-6 w-6 text-purple-400" />, 
+      icon: <RefreshCw className="h-6 w-6 text-purple-400" />,
       title: "Fast Exchanges",
       description: "Instant transactions without intermediaries on the Stellar network",
     },
     {
-      icon: <Globe className="h-6 w-6 text-green-400" />, 
+      icon: <Globe className="h-6 w-6 text-green-400" />,
       title: "Global Access",
       description: "Connect with all available assets in the Stellar ecosystem",
     },

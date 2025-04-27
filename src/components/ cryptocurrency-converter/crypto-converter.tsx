@@ -171,7 +171,7 @@ export default function CryptoConverter() {
                   <div className="relative crypto-dropdown">
                     {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
                     <button
-                      className="w-full flex items-center justify-between bg-gray-800/30 border border-gray-700 rounded-lg p-2.5 text-white"
+                      className="w-full flex items-center justify-between bg-[#131b31] border border-[#1e2747] rounded-lg p-2.5 text-white"
                       onClick={(e) => {
                         e.stopPropagation()
                         setShowFromDropdown(!showFromDropdown)
@@ -206,7 +206,7 @@ export default function CryptoConverter() {
                     </button>
 
                     {showFromDropdown && (
-                      <div className="absolute z-10 w-full mt-1 bg-gray-800/50 border border-gray-700 rounded-lg shadow-lg">
+                      <div className="absolute z-10 w-full mt-1 bg-[#131b31] border border-[#1e2747] rounded-lg shadow-lg">
                         {cryptoData.map((crypto) => (
                           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
 <div
@@ -247,7 +247,7 @@ export default function CryptoConverter() {
                   <div className="relative crypto-dropdown">
                     {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
                     <button
-                      className="w-full flex items-center justify-between bg-gray-800/30 border border-gray-700 rounded-lg p-2.5 text-white"
+                      className="w-full flex items-center justify-between bg-[#131b31] border border-[#1e2747] rounded-lg p-2.5 text-white"
                       onClick={(e) => {
                         e.stopPropagation()
                         setShowToDropdown(!showToDropdown)
@@ -282,7 +282,7 @@ export default function CryptoConverter() {
                     </button>
 
                     {showToDropdown && (
-                      <div className="absolute z-10 w-full mt-1 bg-gray-800/50 border border-gray-700 rounded-lg shadow-lg">
+                      <div className="absolute z-10 w-full mt-1 bg-[#131b31] border border-[#1e2747] rounded-lg shadow-lg">
                         {cryptoData.map((crypto) => (
                           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
 <div

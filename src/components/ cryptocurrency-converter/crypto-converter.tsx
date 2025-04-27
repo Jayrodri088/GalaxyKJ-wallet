@@ -126,13 +126,13 @@ export default function CryptoConverter() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
-        <div className="bg-[#0c1023] border border-[#1a1f35] rounded-xl overflow-hidden">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden">
           <div className="p-6 pb-0">
             <h2 className="text-2xl font-normal text-white mb-6">Currency Converter</h2>
           </div>
 
           <div className="px-6">
-            <div className="flex w-full bg-[#131b31] rounded-lg overflow-hidden">
+            <div className="flex w-full bg-gray-800/30 rounded-lg overflow-hidden">
               {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
               <button
                 className={`flex-1 py-2 px-4 flex items-center justify-center gap-2 ${
@@ -171,7 +171,7 @@ export default function CryptoConverter() {
                   <div className="relative crypto-dropdown">
                     {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
                     <button
-                      className="w-full flex items-center justify-between bg-[#131b31] border border-[#1e2747] rounded-lg p-2.5 text-white"
+                      className="w-full flex items-center justify-between bg-gray-800/30 border border-gray-700 rounded-lg p-2.5 text-white"
                       onClick={(e) => {
                         e.stopPropagation()
                         setShowFromDropdown(!showFromDropdown)
@@ -206,7 +206,7 @@ export default function CryptoConverter() {
                     </button>
 
                     {showFromDropdown && (
-                      <div className="absolute z-10 w-full mt-1 bg-[#131b31] border border-[#1e2747] rounded-lg shadow-lg">
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800/50 border border-gray-700 rounded-lg shadow-lg">
                         {cryptoData.map((crypto) => (
                           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
 <div
@@ -247,7 +247,7 @@ export default function CryptoConverter() {
                   <div className="relative crypto-dropdown">
                     {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
                     <button
-                      className="w-full flex items-center justify-between bg-[#131b31] border border-[#1e2747] rounded-lg p-2.5 text-white"
+                      className="w-full flex items-center justify-between bg-gray-800/30 border border-gray-700 rounded-lg p-2.5 text-white"
                       onClick={(e) => {
                         e.stopPropagation()
                         setShowToDropdown(!showToDropdown)
@@ -282,7 +282,7 @@ export default function CryptoConverter() {
                     </button>
 
                     {showToDropdown && (
-                      <div className="absolute z-10 w-full mt-1 bg-[#131b31] border border-[#1e2747] rounded-lg shadow-lg">
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800/50 border border-gray-700 rounded-lg shadow-lg">
                         {cryptoData.map((crypto) => (
                           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
 <div
@@ -326,7 +326,7 @@ export default function CryptoConverter() {
                     type="text"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full bg-[#131b31] border border-[#1e2747] rounded-lg p-3 text-white h-12 text-base"
+                    className="w-full bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-white h-12 text-base"
                   />
                 </div>
 
@@ -336,18 +336,18 @@ export default function CryptoConverter() {
                     type="text"
                     value={convertedAmount}
                     readOnly
-                    className="w-full bg-[#131b31] border border-[#1e2747] rounded-lg p-3 text-white h-12 text-base"
+                    className="w-full bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-white h-12 text-base"
                   />
                 </div>
 
-                <div className="absolute left-1/2 top-[55%] transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-12 h-12 bg-[#131b31] rounded-full z-10 border border-[#1e2747] shadow-lg mt-1">
+                <div className="absolute left-1/2 top-[55%] transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-12 h-12 bg-gray-800/50 rounded-full z-10 border border-gray-700 shadow-lg mt-1">
                   <div className="text-purple-500">
                     <ArrowRight className="h-5 w-5" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-[#131b31] rounded-lg p-4 flex justify-between items-center">
+              <div className="bg-gray-800/30 rounded-lg p-4 flex justify-between items-center">
                 <div className="text-sm">
                   <p className="text-gray-400">Conversion Rate</p>
                   <p className="font-medium text-white text-lg">
@@ -364,7 +364,7 @@ export default function CryptoConverter() {
           </div>
         </div>
 
-        <div className="bg-[#0c1023] border border-[#1a1f35] rounded-xl">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl">
           <div className="p-6">
             <div className="flex flex-row items-center justify-between mb-4">
               <h2 className="text-2xl font-normal text-white">Exchange Rate History</h2>

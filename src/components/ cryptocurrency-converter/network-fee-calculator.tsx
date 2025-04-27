@@ -26,7 +26,7 @@ export default function NetworkFeeCalculator() {
   }
 
   return (
-    <div className="bg-[#0c1023] border border-[#1a1f35] rounded-xl">
+    <div className="bg-gray-900/50 border border-gray-800 rounded-xl">
       <div className="p-6">
         <h2 className="text-2xl font-normal text-white mb-6">Network Fee Calculator</h2>
         <div className="space-y-6">
@@ -37,7 +37,7 @@ export default function NetworkFeeCalculator() {
                 <select
                   value={network}
                   onChange={(e) => setNetwork(e.target.value)}
-                  className="w-full flex items-center justify-between bg-[#131b31] border border-[#1e2747] rounded-lg p-2.5 text-white appearance-none"
+                  className="w-full flex items-center justify-between bg-gray-800/30 border border-gray-700 rounded-lg p-2.5 text-white appearance-none"
                 >
                   <option value="xlm">Stellar (XLM)</option>
                   <option value="btc">Bitcoin (BTC)</option>
@@ -69,7 +69,7 @@ export default function NetworkFeeCalculator() {
                 type="number"
                 value={operations}
                 onChange={(e) => setOperations(e.target.value)}
-                className="w-full bg-[#131b31] border border-[#1e2747] rounded-lg p-2.5 text-white"
+                className="w-full bg-gray-800/30 border border-gray-700 rounded-lg p-2.5 text-white"
                 min="1"
               />
             </div>
@@ -82,7 +82,7 @@ export default function NetworkFeeCalculator() {
             </div>
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
             <div
-              className="relative h-2 w-full rounded-full bg-[#131b31] my-4 cursor-pointer"
+              className="relative h-2 w-full rounded-full bg-gray-800/30 my-4 cursor-pointer"
               onClick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect()
                 const x = e.clientX - rect.left
@@ -120,7 +120,7 @@ export default function NetworkFeeCalculator() {
             </div>
           </div>
 
-          <div className="flex justify-between items-center p-4 rounded-lg bg-[#131b31] border border-[#1e2747]">
+          <div className="flex justify-between items-center p-4 rounded-lg bg-gray-800/30 border border-gray-700">
             <div>
               <p className="text-gray-400">Estimated Network Fee</p>
               <p className="text-xl font-bold text-white">
@@ -143,7 +143,7 @@ export default function NetworkFeeCalculator() {
             </div>
           </div>
 
-          <div className="flex items-start gap-2 text-xs py-3 px-4 bg-[#0f1a36] rounded-none">
+          <div className="flex items-start gap-2 text-xs py-3 px-4 bg-gray-800/50 rounded-none">
             <Info className="h-4 w-4 mt-0.5 flex-shrink-0 text-[#4a9fff]" />
             <p className="text-[#4a9fff]">
               Network fees are dynamic and can change based on network congestion. This calculator provides estimates

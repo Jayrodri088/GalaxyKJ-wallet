@@ -45,12 +45,12 @@ const conversionHistory = [
 
 export default function ConversionHistory() {
   return (
-    <div className="bg-[#0c1023] border border-[#1a1f35] rounded-xl">
+    <div className="bg-gray-900/50 border border-gray-800 rounded-xl">
       <div className="p-5">
         <h2 className="text-2xl font-normal text-white mb-5">Conversion History</h2>
         <div className="space-y-2">
           {conversionHistory.map((conversion) => (
-            <div key={conversion.id} className="flex items-center justify-between bg-[#131b31] rounded-lg p-3">
+            <div key={conversion.id} className="flex items-center justify-between bg-gray-800/30 rounded-lg p-3">
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
                   <Clock className="h-4 w-4 text-purple-400" />
@@ -63,7 +63,7 @@ export default function ConversionHistory() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="flex items-center justify-end text-white text-xs mb-0.5 bg-[#1e2747] px-3 py-1 rounded-full">
+                <div className="flex items-center justify-end text-white text-xs mb-0.5 bg-gray-800/50 px-3 py-1 rounded-full">
                   <Clock className="h-3 w-3 mr-1 text-white" />
                   <span>{conversion.date}</span>
                 </div>

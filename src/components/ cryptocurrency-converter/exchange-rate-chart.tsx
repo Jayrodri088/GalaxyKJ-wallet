@@ -51,7 +51,7 @@ export default function ExchangeRateChart({ fromSymbol, toSymbol }: ExchangeRate
       const value = typeof item?.value === 'number' ? item.value.toFixed(8) : '0';
       
       return (
-        <div className="bg-[#131b31] border border-[#1e2747] p-2 rounded-md text-sm">
+        <div className="bg-gray-800/50 border border-gray-700 p-2 rounded-md text-sm">
           <p className="text-gray-300">{date}</p>
           <p className="font-medium text-purple-400">
             1 {fromSymbol} = {value} {toSymbol}
@@ -84,7 +84,7 @@ export default function ExchangeRateChart({ fromSymbol, toSymbol }: ExchangeRate
           <AreaChart
             data={chartData}
             margin={{ top: 15, right: 20, left: 0, bottom: 0 }}
-            style={{ backgroundColor: "#0c1023" }}
+            style={{ backgroundColor: "transparent" }}
           >
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">

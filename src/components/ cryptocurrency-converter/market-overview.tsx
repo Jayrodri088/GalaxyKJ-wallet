@@ -15,7 +15,7 @@ interface MarketOverviewProps {
 
 export default function MarketOverview({ cryptoData }: MarketOverviewProps) {
   return (
-    <div className="bg-[#0c1023] border border-[#1a1f35] rounded-xl">
+    <div className="bg-gray-900/50 border border-gray-800 rounded-xl">
       <div className="p-6">
         <h2 className="text-2xl font-normal text-white mb-4">Market Overview</h2>
         <div className="space-y-4">

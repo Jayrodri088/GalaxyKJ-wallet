@@ -24,7 +24,7 @@ export default function StrategySimulator() {
         maxDrawdown: parameters.riskTolerance / 10,
         sharpeRatio: 1.2,
         assetAllocation: parameters.assetAllocation,
-        monthlyReturns: Array(parameters.timeHorizon).fill(0.83) // Mock monthly returns of 0.83%
+        monthlyReturns: Array(parameters.timeHorizon).fill(0.83)
       };
       setSimulationData(result);
       return result;

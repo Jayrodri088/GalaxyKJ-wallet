@@ -11,7 +11,7 @@ interface SimulationResultsProps {
 
 const TABS = ['Performance', 'Comparison', 'Risk Analysis', 'Portfolio'] as const;
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#F97316']; // Tailwind blue-500, emerald-500, amber-500, orange-500
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#F97316']; 
 
 export const SimulationResults: React.FC<SimulationResultsProps> = ({ result, isSimulating }) => {
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>('Performance');

@@ -4,6 +4,7 @@ import PortfolioOverview from "@/components/PortfolioOverview";
 import { Calendar, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { motion } from 'framer-motion';
+import AssetDistribution from "@/components/AssetDistribution";
 
 
 
@@ -58,6 +59,7 @@ export default function Page() {
             <section className=" w-full h-fit flex items-start justify-normal mt-[80px]  gap-[40px] " >
                 <div className="w-full flex flex-col justify-start items-start gap-10 max-w-[1300px]  " >
                     <PortfolioOverview />
+                    <AssetDistribution/>
                 </div>
 
 

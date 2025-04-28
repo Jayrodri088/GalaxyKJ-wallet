@@ -61,13 +61,26 @@ export const SimulationForm: React.FC<SimulationFormProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      setParameters(prev => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked
+      }));
+      return;
+    }
+
+    if (name === 'initialInvestment' || name === 'timeHorizon' || name === 'riskTolerance') {
+      setParameters(prev => ({
+        ...prev,
+        [name]: value === '' ? 0 : Number(value)
+      }));
+      return;
+    }
+
     setParameters(prev => ({
       ...prev,
-      [name]: type === 'checkbox' 
-        ? (e.target as HTMLInputElement).checked
-        : name === 'initialInvestment' || name === 'timeHorizon' || name === 'riskTolerance'
-          ? Number(value)
-          : value
+      [name]: value
     }));
   };
 
@@ -208,9 +221,10 @@ export const SimulationForm: React.FC<SimulationFormProps> = ({
             type="number"
             id="initialInvestment"
             name="initialInvestment"
-            value={parameters.initialInvestment}
+            value={parameters.initialInvestment || ''}
             onChange={handleChange}
-            min="1"
+            min="0"
+            step="100"
             className="mt-1 block w-full rounded-md bg-gray-800/30 border-gray-700 text-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 h-12 px-4 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         </div>

@@ -1,5 +1,7 @@
 'use client';
 
+
+// We don't use tailwind for charts, so we need to use recharts
 import {
   LineChart as RechartsLineChart,
   Line,

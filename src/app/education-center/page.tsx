@@ -4,6 +4,7 @@ import SecurityResources from "@/components/education-center/security-resources"
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Book, BookOpen, CircleHelp, NotepadText, Shield, Trash } from "lucide-react";
+import CryptoGlossary from "@/components/education-center/crypto-glossary";
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState("blockchain guides");
@@ -23,7 +24,7 @@ export default function Page() {
       case "wallet tutorials":
         return "wallet tutorials content";
       case "crypto glossary":
-        return "crypto glossary content";
+        return <CryptoGlossary />;
       case "Advanced FAQ":
         return "Advanced FAQ content";
       case "Security Resources":

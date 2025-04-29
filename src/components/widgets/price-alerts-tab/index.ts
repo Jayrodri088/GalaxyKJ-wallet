@@ -1,0 +1,1 @@
+export { PriceAlertsTab } from './PriceAlertsTab'; 

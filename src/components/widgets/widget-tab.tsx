@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Settings, Save, AlertTriangle, Proportions, Bell, Plus, Eye, Search } from "lucide-react";
+import { X, Grip, Save, Proportions, Bell, Plus, Eye, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -266,7 +266,7 @@ export const WidgetTab = () => {
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex gap-3">
-                      <span className="text-gray-400">□</span>
+                      <span className="text-gray-400"><Grip className="w-4 h-4" /></span>
                       <h3 className="text-lg font-medium">{widget.name}</h3>
                     </div>
                     <div>

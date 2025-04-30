@@ -2,10 +2,18 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { Save } from "lucide-react";
-import { AlertTriangle, Proportions } from "lucide-react";
-import { Bell } from "lucide-react";
+import { X, Settings, Save, AlertTriangle, Proportions, Bell, Plus, Eye, Search } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -15,13 +23,6 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Eye, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CustomSelect } from "@/components/ui/custom-select";
 
@@ -68,10 +69,39 @@ const defaultWidgets: Widget[] = [
   },
 ];
 
+const marketplaceWidgets: Widget[] = [
+  {
+    id: "nft-gallery",
+    name: "NFT Gallery",
+    description: "Display and manage your NFT collection.",
+    status: "inactive",
+  },
+  {
+    id: "defi-yield",
+    name: "DeFi Yield Tracker",
+    description: "Monitor your DeFi investments and yields.",
+    status: "inactive",
+  },
+  {
+    id: "gas-tracker",
+    name: "Gas Tracker",
+    description: "Real-time gas fees and predictions.",
+    status: "inactive",
+  },
+  {
+    id: "token-swap",
+    name: "Quick Swap",
+    description: "Instantly swap tokens at best rates.",
+    status: "inactive",
+  },
+];
+
 export const WidgetTab = () => {
   const [widgets, setWidgets] = useState<Widget[]>(defaultWidgets);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isMarketplaceOpen, setIsMarketplaceOpen] = useState(false);
   const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [layoutConfig, setLayoutConfig] = useState({
     type: "grid",
     columns: 3,
@@ -80,6 +110,12 @@ export const WidgetTab = () => {
     refreshInterval: 30,
     autoArrange: true,
   });
+  const [widgetSettings, setWidgetSettings] = useState({
+    refreshInterval: 30,
+    showBorder: true,
+    enableAnimations: true,
+    notifications: true,
+  });
 
   const handleConfigure = (widget: Widget) => {
     setSelectedWidget(widget);
@@ -87,15 +123,45 @@ export const WidgetTab = () => {
   };
 
   const handleRemove = (widgetId: string) => {
-    setWidgets(
-      widgets.map((w) => (w.id === widgetId ? { ...w, status: "inactive" } : w))
-    );
+    setWidgets(widgets.map(w => 
+      w.id === widgetId 
+        ? { ...w, status: "inactive" } 
+        : w
+    ));
   };
 
   const handleAddWidget = () => {
-    // TODO: Implement marketplace or selection modal
-    console.log("Add widget clicked");
+    setIsMarketplaceOpen(true);
   };
+
+  const handleSaveSettings = () => {
+    if (selectedWidget) {
+      setWidgets(widgets.map(w =>
+        w.id === selectedWidget.id
+          ? { ...w, ...widgetSettings }
+          : w
+      ));
+      setIsConfigOpen(false);
+    }
+  };
+
+  const handleAddFromMarketplace = (widget: Widget) => {
+    const existingWidget = widgets.find(w => w.id === widget.id);
+    if (existingWidget) {
+      setWidgets(widgets.map(w =>
+        w.id === widget.id
+          ? { ...w, status: "active" }
+          : w
+      ));
+    } else {
+      setWidgets([...widgets, { ...widget, status: "active" }]);
+    }
+  };
+
+  const filteredMarketplaceWidgets = marketplaceWidgets.filter(widget =>
+    widget.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    widget.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const layoutTypeOptions = [
     { value: "grid", label: "Grid Layout" },
@@ -195,7 +261,7 @@ export const WidgetTab = () => {
             {widgets.map((widget) => (
               <Card
                 key={widget.id}
-                className=" bg-gray-900/40 border border-gray-800 rounded-xl shadow-lg transition-all hover:bg-gray-800/40 p-6"
+                className="bg-gray-900/40 border border-gray-800 rounded-xl shadow-lg transition-all hover:bg-gray-800/40 p-6"
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
@@ -204,18 +270,22 @@ export const WidgetTab = () => {
                       <h3 className="text-lg font-medium">{widget.name}</h3>
                     </div>
                     <div>
-                      <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        widget.status === "active" 
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-gray-500/20 text-gray-400"
+                      }`}>
                         {widget.status}
                       </span>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-400 ">{widget.description}</p>
+                  <p className="text-sm text-gray-400">{widget.description}</p>
                   <div className="flex justify-between">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleConfigure(widget)}
-                      className="bg-black/50 font-semibold hover:bg-black"
+                      className="bg-black/50 font-semibold hover:bg-black flex items-center gap-2"
                     >
                       Configure
                     </Button>
@@ -223,10 +293,10 @@ export const WidgetTab = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemove(widget.id)}
-                      className="text-red-400 flex items-center gap-1 "
+                      className="text-red-400 flex items-center gap-1 hover:bg-red-950/30"
                     >
                       <X className="w-4 h-4" />
-                      <span>Remove</span>
+                      Remove
                     </Button>
                   </div>
                 </div>
@@ -341,13 +411,118 @@ export const WidgetTab = () => {
             <DialogTitle className="text-gray-200">
               Configure {selectedWidget?.name}
             </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Customize how this widget appears and behaves
+            </DialogDescription>
           </DialogHeader>
           {selectedWidget && (
             <div className="space-y-4">
-              <p className="text-gray-400">{selectedWidget.description}</p>
-              {/* Add widget-specific configuration options here */}
+              <div className="space-y-2">
+                <Label htmlFor="refresh">Refresh Interval (seconds)</Label>
+                <Input
+                  id="refresh"
+                  type="number"
+                  value={widgetSettings.refreshInterval}
+                  onChange={(e) => setWidgetSettings({
+                    ...widgetSettings,
+                    refreshInterval: parseInt(e.target.value)
+                  })}
+                  className="bg-gray-800 border-gray-700"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="border">Show Border</Label>
+                <Switch
+                  id="border"
+                  checked={widgetSettings.showBorder}
+                  onCheckedChange={(checked) => setWidgetSettings({
+                    ...widgetSettings,
+                    showBorder: checked
+                  })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="animations">Enable Animations</Label>
+                <Switch
+                  id="animations"
+                  checked={widgetSettings.enableAnimations}
+                  onCheckedChange={(checked) => setWidgetSettings({
+                    ...widgetSettings,
+                    enableAnimations: checked
+                  })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="notifications">Enable Notifications</Label>
+                <Switch
+                  id="notifications"
+                  checked={widgetSettings.notifications}
+                  onCheckedChange={(checked) => setWidgetSettings({
+                    ...widgetSettings,
+                    notifications: checked
+                  })}
+                />
+              </div>
             </div>
           )}
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setIsConfigOpen(false)}
+              className="text-gray-400 hover:text-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveSettings}
+              className="bg-gradient-to-r from-[#7C3AED] to-[#3a72ea] hover:opacity-90"
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Marketplace Dialog */}
+      <Dialog open={isMarketplaceOpen} onOpenChange={setIsMarketplaceOpen}>
+        <DialogContent className="bg-gray-900 border-gray-800 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-gray-200">Widget Marketplace</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Browse and add new widgets to your dashboard
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Search widgets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-gray-800 border-gray-700"
+            />
+          </div>
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredMarketplaceWidgets.map((widget) => (
+                <Card
+                  key={widget.id}
+                  className="bg-gray-900/40 border border-gray-800 p-4 space-y-3"
+                >
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-medium text-gray-200">{widget.name}</h3>
+                    <Button
+                      size="sm"
+                      onClick={() => handleAddFromMarketplace(widget)}
+                      className="bg-gradient-to-r from-[#7C3AED] to-[#3a72ea] hover:opacity-90"
+                    >
+                      Add Widget
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-400">{widget.description}</p>
+                </Card>
+              ))}
+            </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>

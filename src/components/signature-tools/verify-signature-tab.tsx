@@ -75,12 +75,12 @@ const VerifySignatureTab: React.FC = () => {
         <h2 className="text-purple-800 font-bold text-xl">
           Signature and Verification Tools
         </h2>
-        <p className="text-gray-300 text-sm mb-2">
+        <p className="text-gray-300 text-xs mb-2">
           Secure tools for cryptographic operations, message signing, and
           verification.
         </p>
       </div>
-      <div className="bg-gray-900/50 p-6 rounded-lg shadow-lg border border-gray-800 backdrop-blur-md text-gray-200 max-w-3xl mx-auto w-full mb-4 flex flex-wrap gap-4 justify-between">
+      <div className="bg-gray-900/50 p-2 rounded-lg shadow-lg border border-gray-800 backdrop-blur-md text-gray-200 max-w-3xl mx-auto w-full mb-4 flex flex-wrap gap-4 justify-between">
         <div className="flex items-center px-2 py-2 ">
           <FaShieldAlt className="mr-2" size={12} />
           <p>Sign Message</p>
@@ -112,50 +112,39 @@ const VerifySignatureTab: React.FC = () => {
         </p>
         <div className="space-y-4">
           <div>
-            <p className="text-purple-800">message</p>
+            <p className="text-purple-400 mb-2">message</p>
             <textarea
               name="message"
               value={form.message}
               onChange={handleChange}
-              placeholder="Original message"
-              className="w-full p-3 bg-gray-800/30 border border-gray-800 rounded-lg resize-none"
+              placeholder=" Enter the original message"
+              className="w-full p-2 bg-gray-800/30 border border-gray-800 rounded-lg resize-none"
               rows={4}
             />
           </div>
           <div>
-            <p className="text-purple-800">public key or address </p>
+            <p className="text-purple-400 mb-2">public key or address </p>
             <input
               type="text"
               name="address"
               value={form.address}
               onChange={handleChange}
-              placeholder="Public Key / Address"
-              className="w-full p-3 bg-gray-800/30 border border-gray-800 rounded-lg"
+              placeholder="Public Key or Address"
+              className="w-full p-2 bg-gray-800/30 border border-gray-800 rounded-lg"
             />
           </div>
 
           <div>
-            <p className="text-purple-800">signature</p>
+            <p className="text-purple-400 mb-2">signature</p>
             <textarea
               name="signature"
               value={form.signature}
               onChange={handleChange}
-              placeholder="Signature"
+              placeholder="Enter the signature to verify"
               className="w-full p-3 bg-gray-800/30 border border-gray-800 rounded-lg resize-none"
               rows={3}
             />
           </div>
-
-          <select
-            name="blockchain"
-            value={form.blockchain}
-            onChange={handleChange}
-            className="w-full p-3 bg-gray-800/30 border border-gray-800 rounded-lg"
-          >
-            <option value="ethereum">Ethereum</option>
-            <option value="bitcoin">Bitcoin</option>
-            <option value="stellar">Stellar</option>
-          </select>
 
           <div className="flex justify-between mt-4 gap-4">
             <button
@@ -166,7 +155,7 @@ const VerifySignatureTab: React.FC = () => {
             </button>
             <button
               onClick={resetForm}
-              className="bg-gray-800/30 text-white p-3 rounded-lg transition-colors flex items-center justify-center"
+              className=" text-white p-3 rounded-lg transition-colors flex items-center justify-center"
             >
               <FaRedo className="mr-2" size={10} />
               Reset

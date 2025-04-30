@@ -54,7 +54,7 @@ export function ResourceCard({
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-900/50 backdrop-blur-md border border-gray-800 rounded-xl overflow-hidden hover:border-purple-700/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(124,58,237,0.2)]">
+    <div className="h-full flex flex-col bg-gray-900/80 border border-gray-800 rounded-xl overflow-hidden hover:border-purple-700/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(124,58,237,0.2)]">
       <div className="relative h-44 w-full flex items-center justify-center bg-gray-800/50">
         {!imageError && imageSrc ? (
           <Image

@@ -6,9 +6,9 @@ import { StarBackground } from "@/components/effects/star-background";
 import { CategoryTabs } from "@/components/shared/category-tabs";
 import { BlockchainGuides } from "@/components/education-center/blockchain-guides";
 import { WalletTutorials } from "@/components/education-center/wallet-tutorials";
-import { CryptoGlossary } from "@/components/education-center/crypto-glossary";
 import { AdvancedFAQ } from "@/components/education-center/advanced-faq";
 import SecurityResources from "@/components/education-center/security-resources";
+import CryptoGlossary from "@/components/education-center/crypto-glossary";
 
 export default function EducationCenterPage() {
   const [activeTab, setActiveTab] = useState("blockchain guides");

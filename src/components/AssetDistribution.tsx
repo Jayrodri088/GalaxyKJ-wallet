@@ -1,4 +1,16 @@
 
+import {
+    Chart as ChartJS,
+    ArcElement,
+    Tooltip,
+    Legend,
+  } from 'chart.js';
+
+  import { Pie } from 'react-chartjs-2';
+
+  ChartJS.register(ArcElement, Tooltip, Legend);
+
+
 
 
 export default function AssetDistribution() {
@@ -37,6 +49,17 @@ export default function AssetDistribution() {
         },
     ]
 
+    const chartData = {
+        labels: asstesData.map(asset => asset.name),
+        datasets: [
+          {
+            label: "Portfolio",
+            data: asstesData.map(asset => asset.percentage),
+            backgroundColor: asstesData.map(asset => asset.colors),
+          },
+        ],
+      };
+
 
     return (
         <section className="w-full min-h-[50vh] flex flex-col items-start justify-start gap-5  rounded-lg bg-[#13182B]/50 backdrop-blur-sm px-10 py-12  " >
@@ -48,7 +71,7 @@ export default function AssetDistribution() {
             <div className="w-full  flex flex-col md:flex-row items-start gap-5 " >
 
                 <div className=" w-full max-w-[630px] min-w-[300px] md:min-w-[350px] h-[300px]  flex items-center justify-center  flex-grow-1 bg-[#13182B]/90 backdrop-blur-sm   text-[#6283AD] text-xl font-medium  p-3  rounded-sm " >
-                    Asset allocation chart would appear here
+                   <Pie data={chartData} />
                 </div>
 
 

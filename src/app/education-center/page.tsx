@@ -1,73 +1,66 @@
 "use client";
 
 import { useState } from "react";
-import {
-  FileText,
-  BookOpen,
-  BookText,
-  HelpCircle,
-  ShieldCheck,
-} from "lucide-react";
-import WalletTutorials from "@/components/education-center/wallet-tutorials";
-import SecurityResources from "@/components/education-center/security-resources";
+import { Book, BookOpen, CircleHelp, NotepadText, Shield } from "lucide-react";
+import { StarBackground } from "@/components/effects/star-background";
+import { CategoryTabs } from "@/components/shared/category-tabs";
+import { BlockchainGuides } from "@/components/education-center/blockchain-guides";
+import { WalletTutorials } from "@/components/education-center/wallet-tutorials";
+import { AdvancedFAQ } from "@/components/education-center/advanced-faq";
+import { SecurityResources } from "@/components/education-center/security-resources";
+import { CryptoGlossary } from "@/components/education-center/crypto-glossary";
 
-export default function Page() {
-  const [activeTab, setActiveTab] = useState("wallet tutorials");
+export default function EducationCenterPage() {
+  const [activeTab, setActiveTab] = useState("blockchain guides");
 
   const tabs = [
-    { icon: <FileText size={20} />, label: "blockchain guides" },
-    { icon: <BookOpen size={20} />, label: "wallet tutorials" },
-    { icon: <BookText size={20} />, label: "crypto glossary" },
-    { icon: <HelpCircle size={20} />, label: "Advanced FAQ" },
-    { icon: <ShieldCheck size={20} />, label: "Security Resources" },
+    { icon: <Book size={20} />, label: "blockchain guides" },
+    { icon: <NotepadText size={20} />, label: "wallet tutorials" },
+    { icon: <BookOpen size={20} />, label: "crypto glossary" },
+    { icon: <CircleHelp size={20} />, label: "advanced faq" },
+    { icon: <Shield size={20} />, label: "security resources" },
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
       case "blockchain guides":
-        return "blockchain guides content";
+        return <BlockchainGuides />;
       case "wallet tutorials":
         return <WalletTutorials />;
       case "crypto glossary":
-        return "crypto glossary content";
-      case "Advanced FAQ":
-        return "Advanced FAQ content";
-      case "Security Resources":
+        return <CryptoGlossary />;
+      case "advanced faq":
+        return <AdvancedFAQ />;
+      case "security resources":
         return <SecurityResources />;
       default:
-        return "Select a tab";
+        return <BlockchainGuides />;
     }
   };
 
   return (
-    <div className="w-full min-h-screen bg-[url('/stars-bg.png')] text-white px-6 py-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">Galaxy Wallet Knowledge Hub</h1>
-        <p className="text-gray-400 mb-8">
-          Explore our comprehensive resources to master cryptocurrency and
-          blockchain concepts
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
-          {tabs.map((tab, index) => (
-            <button
-              key={index}
-              onClick={() => setActiveTab(tab.label)}
-              className={`flex items-center justify-center py-3 px-4 rounded text-sm font-medium transition-colors ${
-                activeTab === tab.label
-                  ? "bg-purple-900/70 text-white"
-                  : "bg-[#111827]/70 text-gray-300 hover:bg-[#1a2234]/70"
-              }`}
-            >
-              {tab.icon}
-              <span className="ml-2">
-                {tab.label.charAt(0).toUpperCase() + tab.label.slice(1)}
-              </span>
-            </button>
-          ))}
+    <div className="w-full min-h-screen bg-[#0A0B1E] relative">
+      <StarBackground />
+      <div className="w-full min-h-screen relative z-10 flex flex-col items-start justify-start px-4 sm:px-6 py-8 gap-6">
+        <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
+            Knowledge Hub
+          </h1>
+          <input
+            type="search"
+            placeholder="Search resources"
+            className="border border-gray-700 bg-gray-800/50 px-5 py-2 rounded-lg text-white w-full sm:w-auto"
+          />
         </div>
 
-        <div className="mt-8">{renderTabContent()}</div>
+        <div className="w-full h-full flex flex-col gap-6 items-start">
+          <CategoryTabs
+            tabs={tabs}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
+          <div className="w-full">{renderTabContent()}</div>
+        </div>
       </div>
     </div>
   );

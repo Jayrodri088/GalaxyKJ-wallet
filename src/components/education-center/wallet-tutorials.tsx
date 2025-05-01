@@ -2,8 +2,9 @@
 
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
-export default function WalletTutorials() {
+export function WalletTutorials() {
   const tutorials = [
     {
       id: "sending-receiving",
@@ -61,20 +62,7 @@ export default function WalletTutorials() {
   ];
 
   const getCategoryBadgeStyle = (category: string) => {
-    switch (category) {
-      case "Basic":
-        return "bg-white text-black";
-      case "Security":
-        return "bg-white text-black";
-      case "Tools":
-        return "bg-white text-black";
-      case "Advanced":
-        return "bg-white text-black";
-      case "Finance":
-        return "bg-white text-black";
-      default:
-        return "bg-white text-black";
-    }
+    return "bg-white text-black";
   };
 
   const getProgressBarColor = (completion: number) => {
@@ -97,11 +85,16 @@ export default function WalletTutorials() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="grid grid-cols-1 md:grid-cols-2 gap-6"
+    >
       {tutorials.map((tutorial) => (
         <div
           key={tutorial.id}
-          className=" border border-[#1e2a45] rounded-lg overflow-hidden"
+          className="border border-[#1e2a45] rounded-lg overflow-hidden"
         >
           <div className="p-5">
             <div className="flex justify-between items-start mb-3">
@@ -142,6 +135,6 @@ export default function WalletTutorials() {
           </div>
         </div>
       ))}
-    </div>
+    </motion.div>
   );
 }

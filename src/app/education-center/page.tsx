@@ -40,7 +40,7 @@ export default function Page() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#0a0e1a] bg-[url('/stars-bg.png')] text-white px-6 py-8">
+    <div className="w-full min-h-screen bg-[url('/stars-bg.png')] text-white px-6 py-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">Galaxy Wallet Knowledge Hub</h1>
         <p className="text-gray-400 mb-8">

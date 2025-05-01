@@ -101,7 +101,7 @@ export default function WalletTutorials() {
       {tutorials.map((tutorial) => (
         <div
           key={tutorial.id}
-          className="bg-[#0f1729] border border-[#1e2a45] rounded-lg overflow-hidden"
+          className=" border border-[#1e2a45] rounded-lg overflow-hidden"
         >
           <div className="p-5">
             <div className="flex justify-between items-start mb-3">

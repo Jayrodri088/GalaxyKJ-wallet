@@ -1,5 +1,16 @@
 "use client"
 import React, { useState } from "react"
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Tooltip,
+    Legend,
+  } from 'chart.js';
+  import { Bar } from 'react-chartjs-2';
+
+  ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 
 
@@ -13,6 +24,48 @@ export default function PerformanceComparison() {
     const handleSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
         setOptionValue(event.target.value)
     }
+
+    const benchmarkData = {
+        Bitcoin: -1.2,
+        Ethereum: 1.5,
+        "DeFi Index": 3.0,
+        "Top 10 Crypto": -2.1,
+      };
+
+      const portfolioPerformance = 5.8;
+
+      const chartData = {
+        labels: ["Your Portfolio", optionValue],
+        datasets: [
+          {
+            label: "Performance (%)",
+            data: [portfolioPerformance, benchmarkData[optionValue]],
+            backgroundColor: ["#4ADD80", "#3B82F6"],
+          },
+        ],
+      };
+
+      const chartOptions = {
+        responsive: true,
+        plugins: {
+          legend: {
+            labels: {
+              color: '#A0AEC0',
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: '#A0AEC0' },
+            grid: { color: '#2D3748' },
+          },
+          y: {
+            ticks: { color: '#A0AEC0' },
+            grid: { color: '#2D3748' },
+          },
+        },
+      };
+
 
 
 
@@ -41,7 +94,7 @@ export default function PerformanceComparison() {
 
             </div>
 
-            <div className=" w-full h-[300px] flex items-center justify-center  bg-[#13182B]/90  text-[#6283AD] text-xl font-medium    " >  Comparison chart would appear here </div>
+            <div className=" w-full h-[300px] flex items-center justify-center  bg-[#13182B]/90  text-[#6283AD] text-xl font-medium    " >    <Bar data={chartData} options={chartOptions} /> </div>
 
 
             <div className="w-full flex items-center justify-between flex-col md:flex-row gap-2 ">
@@ -56,7 +109,11 @@ export default function PerformanceComparison() {
 
             </div>
 
-            <p className=" text-[#6283AD] text-base   font-medium ">  Your portfolio is outperforming the selected benchmark by <span className="text-[#4ADD80] " > 7.9%</span> in this period.</p>
+            <p className="text-[#6283AD] text-base font-medium">
+  Your portfolio is outperforming the selected benchmark by
+  <span className="text-[#4ADD80]"> {(portfolioPerformance - benchmarkData[optionValue]).toFixed(1)}%</span>
+  in this period.
+</p>
 
 
 

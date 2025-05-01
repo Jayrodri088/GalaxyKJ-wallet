@@ -1,4 +1,22 @@
 
+
+
+import {
+    Chart as ChartJS,
+    LineElement,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    Tooltip,
+    Legend,
+  } from 'chart.js';
+  import { Line } from 'react-chartjs-2';
+
+  ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
+
+
+
+
 interface portfolioCardValuesProps {
     heading: string;
     value: number;
@@ -25,6 +43,44 @@ export default function PortfolioOverview() {
                 value: 24.7,
             }
         ]
+
+
+        const lineChartData = {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+            datasets: [
+              {
+                label: 'Portfolio Value',
+                data: [8000, 9500, 10400, 11500, 12458.32],
+                borderColor: '#4ADD80',
+                backgroundColor: 'rgba(74, 221, 128, 0.2)',
+                tension: 0.4,
+                fill: true,
+              },
+            ],
+          };
+
+          const lineChartOptions = {
+            responsive: true,
+            plugins: {
+              legend: {
+                labels: {
+                  color: '#A0AEC0',
+                },
+              },
+            },
+            scales: {
+              x: {
+                ticks: { color: '#A0AEC0' },
+                grid: { color: '#2D3748' },
+              },
+              y: {
+                ticks: { color: '#A0AEC0' },
+                grid: { color: '#2D3748' },
+              },
+            },
+          };
+
+
     return (
         <section className="w-full bg-[#13182B]/50 min-h-[50vh] flex flex-col items-start justify-start gap-5 px-4 py-6 rounded-sm   "  >
 
@@ -34,7 +90,7 @@ export default function PortfolioOverview() {
        </div>
 
        <div className="w-full h-[30vh] lg:h-[50vh] flex items-center justify-center  bg-[#13182B]/90  text-[#6283AD] text-xl font-medium    "  >
-graph
+       <Line data={lineChartData} options={lineChartOptions} />
        </div>
 
 

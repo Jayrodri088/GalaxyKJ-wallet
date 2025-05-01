@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Send, ReceiptIcon as ReceiveIcon, Repeat, Zap } from "lucide-react"
+import { Send, ReceiptIcon as ReceiveIcon, Repeat, Zap, BookOpen, PenSquare } from "lucide-react"
 
 export function WalletActions() {
   const router = useRouter()
@@ -36,10 +36,24 @@ export function WalletActions() {
       gradient: "from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600",
       shadow: "hover:shadow-[0_0_15px_rgba(245,158,11,0.5)]",
     },
+    {
+      label: "Learn",
+      icon: BookOpen,
+      href: "/education-center",
+      gradient: "from-green-600 to-green-800 hover:from-green-500 hover:to-green-700",
+      shadow: "hover:shadow-[0_0_15px_rgba(22,163,74,0.5)]",
+    },
+    {
+      label: "Sign",
+      icon: PenSquare,
+      href: "/signature-tools",
+      gradient: "from-pink-600 to-pink-800 hover:from-pink-500 hover:to-pink-700",
+      shadow: "hover:shadow-[0_0_15px_rgba(219,39,119,0.5)]",
+    },
   ]
 
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-6 gap-4">
       {actions.map(({ label, icon: Icon, href, gradient, shadow }) => (
         <Button
           key={label}

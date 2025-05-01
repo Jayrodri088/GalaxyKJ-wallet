@@ -1,4 +1,4 @@
-import { SendReceiveScreen } from "@/components/send-receive-screen"
+import { SendReceiveScreen } from "@/components/send-receive/send-receive-screen"
 
 export default function SendReceivePage() {
   return (

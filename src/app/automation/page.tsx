@@ -1,4 +1,4 @@
-import { AutomationCenter } from "@/components/automation-center"
+import { AutomationCenter } from "@/components/automation/automation-center"
 
 export default function AutomationPage() {
   return (

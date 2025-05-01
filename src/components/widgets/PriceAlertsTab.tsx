@@ -97,9 +97,9 @@ export default function Dashboard() {
 
   const getIconColor = (asset: string) => {
     switch (asset) {
-      case 'XLM': return 'bg-blue-600';
-      case 'BTC': return 'bg-yellow-600';
-      case 'ETH': return 'bg-green-600';
+      case 'XLM': return ' bg-[#274267]/50 text-blue-700';
+      case 'BTC': return 'bg-[#BD8D12]/20 text-[#BD8D12]';
+      case 'ETH': return 'bg-[#236A3E]/30 text-green-500';
       default: return 'bg-purple-600';
     }
   };
@@ -178,7 +178,7 @@ export default function Dashboard() {
                   className="flex items-center justify-between bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg border border-gray-800"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 p-2 rounded-full ${getIconColor(alert.asset)} flex items-center justify-center text-white font-medium`}>
+                    <div className={`w-10 h-10 p-2 rounded-full ${getIconColor(alert.asset)} flex items-center justify-center  font-bold`}>
                       {alert.icon}
                     </div>
                     <div>
@@ -221,10 +221,10 @@ export default function Dashboard() {
               <div>
                 <label className="text-sm text-gray-400 block mb-2">Asset</label>
                 <Select value={selectedAsset} onValueChange={setSelectedAsset}>
-                  <SelectTrigger className="w-full bg-gray-900/50 border-gray-700 text-gray-300">
+                  <SelectTrigger className="w-full bg-gray-800 outline-0 border-0 text-gray-300">
                     <SelectValue placeholder="Select asset" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border border-gray-800 text-gray-300">
+                  <SelectContent className="bg-gray-800 border border-gray-900 text-gray-300">
                     <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
                     <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
                     <SelectItem value="XLM">Stellar (XLM)</SelectItem>
@@ -235,10 +235,10 @@ export default function Dashboard() {
               <div>
                 <label className="text-sm text-gray-400 block mb-2">Alert Type</label>
                 <Select value={selectedAlertType} onValueChange={setSelectedAlertType}>
-                  <SelectTrigger className="w-full bg-gray-900/50 border-gray-700 text-gray-300">
+                  <SelectTrigger className="w-full bg-gray-800 border-0 text-gray-300">
                     <SelectValue placeholder="Select alert type" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border border-gray-800 text-gray-300">
+                  <SelectContent className="bg-gray-800 border border-gray-900 text-gray-300">
                     <SelectItem value="Price Above">Price Above</SelectItem>
                     <SelectItem value="Price Below">Price Below</SelectItem>
                     <SelectItem value="Price Change">Price Change (%)</SelectItem>
@@ -253,7 +253,7 @@ export default function Dashboard() {
                   value={alertValue}
                   onChange={(e) => setAlertValue(e.target.value)}
                   placeholder="Enter value"
-                  className="bg-gray-900/50 border-gray-700 text-gray-300"
+                  className="bg-gray-800 border-0 text-gray-300"
                 />
               </div>
 

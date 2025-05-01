@@ -7,8 +7,8 @@ import { CategoryTabs } from "@/components/shared/category-tabs";
 import { BlockchainGuides } from "@/components/education-center/blockchain-guides";
 import { WalletTutorials } from "@/components/education-center/wallet-tutorials";
 import { AdvancedFAQ } from "@/components/education-center/advanced-faq";
-import SecurityResources from "@/components/education-center/security-resources";
-import CryptoGlossary from "@/components/education-center/crypto-glossary";
+import { SecurityResources } from "@/components/education-center/security-resources";
+import { CryptoGlossary } from "@/components/education-center/crypto-glossary";
 
 export default function EducationCenterPage() {
   const [activeTab, setActiveTab] = useState("blockchain guides");
@@ -41,7 +41,6 @@ export default function EducationCenterPage() {
   return (
     <div className="w-full min-h-screen bg-[#0A0B1E] relative">
       <StarBackground />
-
       <div className="w-full min-h-screen relative z-10 flex flex-col items-start justify-start px-4 sm:px-6 py-8 gap-6">
         <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">

@@ -28,7 +28,10 @@ export default function RootLayout({
       <head>
       <link rel="icon" type="image/png" href="/images/galaxy-smart-wallet-logo.png" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased relative bg-[#0A0B1E] text-white`}>
+      <body 
+        className={`${geistSans.variable} ${geistMono.variable} antialiased relative bg-[#0A0B1E] text-white`}
+        suppressHydrationWarning={true}
+      >
         <StarBackground />
         <main className="relative z-10">{children}</main>
       </body>

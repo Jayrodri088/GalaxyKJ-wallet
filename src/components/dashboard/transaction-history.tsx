@@ -1,11 +1,18 @@
 "use client";
 
-import { useRouter } from "next/navigation"; 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, ArrowDownLeft, RefreshCw, Filter, ChevronRight } from "lucide-react";
+import {
+  ArrowUpRight,
+  ArrowDownLeft,
+  RefreshCw,
+  Filter,
+  ChevronRight,
+} from "lucide-react";
+import { fetchTransactions } from "@/lib/stellar/transactions";
 
 type TransactionType = "receive" | "send" | "swap";
 type TransactionStatus = "completed" | "pending" | "failed";
@@ -16,7 +23,7 @@ type Transaction = {
   asset?: string;
   assetFrom?: string;
   assetTo?: string;
-  amount?: number;
+  amount?: string;
   amountFrom?: number;
   amountTo?: number;
   from?: string;
@@ -25,53 +32,45 @@ type Transaction = {
   status: TransactionStatus;
 };
 
-const transactions: Transaction[] = [
-  {
-    id: 1,
-    type: "receive",
-    asset: "XLM",
-    amount: 125.5,
-    from: "G7J2...X9P3",
-    date: "2025-03-11T14:32:00",
-    status: "completed",
-  },
-  {
-    id: 2,
-    type: "send",
-    asset: "USDC",
-    amount: 50,
-    to: "H8K3...L7M2",
-    date: "2025-03-10T09:15:00",
-    status: "completed",
-  },
-  {
-    id: 3,
-    type: "swap",
-    assetFrom: "XLM",
-    assetTo: "USDC",
-    amountFrom: 200,
-    amountTo: 78.25,
-    date: "2025-03-09T16:45:00",
-    status: "completed",
-  },
-  {
-    id: 4,
-    type: "send",
-    asset: "XLM",
-    amount: 75,
-    to: "P9Q2...R5S7",
-    date: "2025-03-08T11:20:00",
-    status: "pending",
-  },
-];
-
 export function TransactionHistory() {
+  const publicKey = "GAFGGL7IZTHXC6REXWCIZYS7L547XY63R5JUCOKSZNXO6SMQBSLUWLTV";
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | TransactionType>("all");
 
-  const router = useRouter(); 
+  const router = useRouter();
+
+  useEffect(() => {
+    const loadTransactions = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const fetchedTransactions = await fetchTransactions({
+          account: publicKey,
+          limit: 4,
+        });
+
+        setTransactions(fetchedTransactions);
+      } catch (err) {
+        console.error("Failed to load transactions:", err);
+        setError("Failed to load transactions. Please try again.");
+        setTransactions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (publicKey) {
+      loadTransactions();
+    }
+  }, [publicKey]);
 
   const filteredTransactions =
-    filter === "all" ? transactions : transactions.filter((t) => t.type === filter);
+    filter === "all"
+      ? transactions
+      : transactions.filter((t) => t.type === filter);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -90,7 +89,9 @@ export function TransactionHistory() {
   return (
     <Card className="border-gray-800 bg-gray-900/50">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-medium text-gray-300">Transaction History</CardTitle>
+        <CardTitle className="text-lg font-medium text-gray-300">
+          Transaction History
+        </CardTitle>
         <Button
           variant="outline"
           size="sm"
@@ -108,7 +109,9 @@ export function TransactionHistory() {
               variant="ghost"
               size="sm"
               className={`rounded-full px-3 py-1 text-xs ${
-                filter === type ? "bg-purple-900/50 text-white" : "text-gray-400 hover:text-white hover:bg-gray-800/50"
+                filter === type
+                  ? "bg-purple-900/50 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-gray-800/50"
               }`}
               onClick={() => setFilter(type as "all" | TransactionType)}
             >
@@ -151,7 +154,9 @@ export function TransactionHistory() {
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-400">{formatDate(tx.date)}</div>
+                  <div className="text-xs text-gray-400">
+                    {formatDate(tx.date)}
+                  </div>
                 </div>
               </div>
 
@@ -163,7 +168,11 @@ export function TransactionHistory() {
                         {tx.amountFrom} → {tx.amountTo}
                       </span>
                     ) : (
-                      <span className={tx.type === "receive" ? "text-green-400" : ""}>
+                      <span
+                        className={
+                          tx.type === "receive" ? "text-green-400" : ""
+                        }
+                      >
                         {tx.type === "receive" ? "+" : "-"}
                         {tx.amount}
                       </span>

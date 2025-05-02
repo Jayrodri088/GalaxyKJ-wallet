@@ -11,7 +11,6 @@ import {
   FaRedo,
 } from "react-icons/fa";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { MdVerified } from "react-icons/md";
 import { StarBackground } from "../effects/star-background";
 
 export default function ProofOwnershipTab() {

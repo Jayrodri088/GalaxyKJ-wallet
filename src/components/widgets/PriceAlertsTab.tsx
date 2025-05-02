@@ -106,14 +106,14 @@ export default function Dashboard() {
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 p-6 text-gray-100">
-      <div className="bg-gray-900/30 backdrop-blur-md">
-        <div className="flex justify-between items-center mb-8">
+      <div className="">
+        <div className="flex justify-between items-center mb-8 bg-gray-900/30 backdrop-blur-md">
           <div className="flex space-y-2 flex-col">
-            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400">Widget Configuration</h1>
+            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">Widget Configuration</h1>
             <p className="text-sm text-gray-400">Customize your dashboard with widgets and personalized views</p>
           </div>
           <div className="flex space-x-3">
-            <button className="px-4 py-2 rounded-md bg-gray-800 text-white text-sm flex justify-center items-center gap-2"> <Eye size={16}/> Preview</button>
+            <button className="px-4 py-2 rounded-md bg-gray-900/95  text-white text-sm flex justify-center items-center gap-2"> <Eye size={16}/> Preview</button>
             <button className="px-4 py-2 rounded-md bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm flex items-center">
               <span className='flex items-center gap-2'> <Save size={16}/> Save Layout</span>
             </button>
@@ -121,20 +121,20 @@ export default function Dashboard() {
         </div>
 
         
-        <div className="flex space-x-4 justify-between mb-6 border-b border-gray-800 pb-4">
+        <div className="flex  justify-between mb-6  bg-gray-900/60   text-sm">
           <button 
             onClick={() => setActiveTab('widgets')}
-            className={`px-20 py-2 flex items-center bg-gray-800/30 rounded-md space-x-2 ${activeTab === 'widgets' ? 'text-white bg-purple-900/30 rounded-md' : 'text-gray-400'}`}>
+            className={`mx-auto w-full py-2 flex items-center justify-center  space-x-2 ${activeTab === 'widgets' ? 'text-white bg-purple-900/30' : 'text-gray-400'}`}>
             <span className='flex items-center gap-2'> <Save size={16}/>Widgets</span>
           </button>
           <button 
             onClick={() => setActiveTab('custom-views')}
-            className={`px-14 py-2 flex items-center bg-gray-800/30 rounded-md  space-x-2 ${activeTab === 'custom-views' ? 'text-white bg-purple-900/30 rounded-md' : 'text-gray-400'}`}>
-            <span className='flex items-center gap-2'> <Eye size={16}/>Custom Views</span>
+            className={`mx-auto w-full py-2 flex items-center justify-center  space-x-2 ${activeTab === 'custom-views' ? 'text-white bg-purple-900/30' : 'text-gray-400'}`}>
+            <span className='flex items-center justify-center gap-2'> <Eye size={16}/>Custom Views</span>
           </button>
           <button 
             onClick={() => setActiveTab('price-alerts')}
-            className={`px-20 py-2 flex items-center space-x-2 bg-gray-800/30 rounded-md ${activeTab === 'price-alerts' ? 'text-white bg-purple-900/30 rounded-md' : 'text-gray-400'}`}>
+            className={`mx-auto w-full py-2 flex items-center space-x-2 justify-center  ${activeTab === 'price-alerts' ? 'text-white bg-purple-900/50' : 'text-gray-400'}`}>
             <span className='flex items-center gap-2'> <Bell size={16}/>Price Alerts</span>
           </button>
         </div>

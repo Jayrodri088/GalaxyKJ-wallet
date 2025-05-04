@@ -1,4 +1,4 @@
-import CustomViewTab from "@/components/CustomViewTab";
+import CustomViewTab from "@/components/custom-view-tab"
 
 export default function WidgetConfigurationPage() {
   return (

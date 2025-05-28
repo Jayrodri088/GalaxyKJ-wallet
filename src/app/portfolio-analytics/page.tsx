@@ -9,22 +9,14 @@ import PerformanceComparison from "@/components/PerformanceComparison";
 import RebalancingSuggestions from "@/components/RebalancingSuggestions";
 import RiskAnalysis from "@/components/RiskAnalysis";
 
-
-
 export default function Page() {
     const [optionValue, setOptionValue] = useState("All Time");
-
-
-
 
     const options = ["7 Days", "1 Month", "3 Month", "1 Year", "All Time"]
 
     const handleSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
         setOptionValue(event.target.value)
     }
-
-
-
 
     return (
         <div className=" py-[20px] md:py-[2%] px-[10px] md:px-[3%] flex flex-col items-center   " >
@@ -45,7 +37,6 @@ export default function Page() {
                         </select>
                     </div>
 
-
                     <button className="bg-[#12132A]/70 backdrop-blur-sm py-3 px-4 flex items-center justify-center gap-5 cursor-pointer rounded-lg"
                     >
                         <motion.span
@@ -57,15 +48,12 @@ export default function Page() {
 
             </header>
 
-
-
             <section className=" w-full h-fit flex flex-col md:flex-row items-start justify-normal mt-[80px]  gap-[30px] " >
                 <div className="w-full flex flex-col justify-start items-start gap-10 max-w-[1300px]  " >
                     <PortfolioOverview />
                     <AssetDistribution/>
                     <PerformanceComparison/>
                 </div>
-
 
                 <div className=" w-full max-w-[400px] min-w-[320px]  h-fit flex flex-col items-start gap-10 "  >
 
@@ -75,10 +63,6 @@ export default function Page() {
                 </div>
 
             </section>
-
-
-
-
 
         </div>
     )

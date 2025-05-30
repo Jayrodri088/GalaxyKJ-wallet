@@ -32,7 +32,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const SOURCE_SECRET = process.env.NEXT_PUBLIC_STELLAR_SECRET as string;
+const SOURCE_SECRET =
+  "SC65LNVENQQ3YRMFDGKE7KLFRBNDPZIH6S3APFIKUNOYFKDY3RPVL6M7";
 
 export function SendForm() {
   const { toast } = useToast();

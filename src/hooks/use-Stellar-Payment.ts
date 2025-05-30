@@ -5,12 +5,9 @@ import {
   Operation,
   Asset,
   Memo,
-  Networks,
 } from "@stellar/stellar-sdk";
 import * as StellarSdk from "@stellar/stellar-sdk";
-
-const HORIZON_URL = "https://horizon-testnet.stellar.org";
-const NETWORK_PASSPHRASE = Networks.TESTNET;
+import { STELLAR_CONFIG } from "@/lib/stellar/config";
 
 export function useStellarPayment(sourceSecret: string) {
   const [loading, setLoading] = useState(false);
@@ -20,7 +17,7 @@ export function useStellarPayment(sourceSecret: string) {
     error?: string;
   }>(null);
 
-  const server = new StellarSdk.Horizon.Server(HORIZON_URL);
+  const server = new StellarSdk.Horizon.Server(STELLAR_CONFIG.horizonURL);
   const sourceKeypair = Keypair.fromSecret(sourceSecret);
 
   // Estimate fee and time
@@ -36,7 +33,7 @@ export function useStellarPayment(sourceSecret: string) {
       };
     } catch (err: any) {
       return {
-        error: err.message || "Unknown error while estimating transaction",
+        error: err.message || "Unknown_error_while_estimating_transaction",
       };
     }
   };
@@ -75,7 +72,7 @@ export function useStellarPayment(sourceSecret: string) {
 
       const txBuilder = new TransactionBuilder(account, {
         fee: fee.toString(),
-        networkPassphrase: NETWORK_PASSPHRASE,
+        networkPassphrase: STELLAR_CONFIG.networkPassphrase,
       }).addOperation(
         Operation.payment({
           destination,

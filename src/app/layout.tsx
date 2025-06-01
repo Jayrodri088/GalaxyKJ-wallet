@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-      <link rel="icon" type="image/png" href="/images/galaxy-smart-wallet-logo.png" />
+        <link rel="icon" type="image/png" href="/images/galaxy-smart-wallet-logo.png" />
       </head>
       <body 
         className={`${geistSans.variable} ${geistMono.variable} antialiased relative bg-[#0A0B1E] text-white`}

@@ -203,7 +203,7 @@ export default function GalaxyLogin({ onLoginSuccess, onRecoveryClick, onClose }
               onClick={() => setShowPassword(!showPassword)}
               disabled={isLoading}
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
             </Button>
           </div>
         </div>

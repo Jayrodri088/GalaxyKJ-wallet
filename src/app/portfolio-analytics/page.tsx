@@ -1,13 +1,13 @@
 "use client"
 
-import PortfolioOverview from "@/components/PortfolioOverview";
+import PortfolioOverview from "@/components/portfolio-overview";
 import { Calendar, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { motion } from 'framer-motion';
-import AssetDistribution from "@/components/AssetDistribution";
-import PerformanceComparison from "@/components/PerformanceComparison";
-import RebalancingSuggestions from "@/components/RebalancingSuggestions";
-import RiskAnalysis from "@/components/RiskAnalysis";
+import AssetDistribution from "@/components/asset-distribution";
+import PerformanceComparison from "@/components/performance-comparison";
+import RebalancingSuggestions from "@/components/rebalancing-suggestions";
+import RiskAnalysis from "@/components/risk-analysis";
 
 export default function Page() {
     const [optionValue, setOptionValue] = useState("All Time");

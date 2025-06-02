@@ -3,23 +3,30 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import GalaxyLogin from "@/components/login/galaxy-login"
+import { GalaxyLogin } from "@/components/login/galaxy-login"
 import { ArrowRight, Wallet } from "lucide-react"
+import { Keypair } from "@stellar/stellar-sdk"
+import { useWalletStore } from "@/store/wallet-store"
 
 export function LoginButton() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [privateKey, setPrivateKey] = useState<string | null>(null)
   const [isHovered, setIsHovered] = useState(false)
 
+  const setPublicKey = useWalletStore((state) => state.setPublicKey)
+
   const handleLoginSuccess = (decryptedPrivateKey: string) => {
-    setPrivateKey(decryptedPrivateKey)
+    const keypair = Keypair.fromSecret(decryptedPrivateKey)
+    const publicKey = keypair.publicKey()
+
+    setPublicKey(publicKey)
     setIsLoggedIn(true)
     setIsLoginModalOpen(false)
   }
 
   const handleRecoveryClick = () => {
-    // Implement recovery flow
+    // TODO: implement recovery flow
+    console.log("Recovery flow triggered")
   }
 
   const handleClose = () => {
@@ -48,6 +55,7 @@ export function LoginButton() {
           </div>
         </Button>
       </motion.div>
+
       {isLoginModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <GalaxyLogin

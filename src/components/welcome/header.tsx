@@ -2,15 +2,14 @@
 
 import { motion } from "framer-motion"
 import Image from "next/image"
-import { CreateWalletButton } from "./create-wallet-button"
-import { LoginButton } from "@/components/layout/header/login-button"
+import { OutWalletButton } from "@/components/welcome/auth-wallet-button"
 
 interface HeaderProps {
-  onCreateWallet: () => void
-  isCreating: boolean
+  onGetStarted: () => void
+  isLoading: boolean
 }
 
-export function Header({ onCreateWallet, isCreating }: HeaderProps) {
+export function Header({ onGetStarted, isLoading }: HeaderProps) {
   return (
     <header className="relative z-50 w-full py-6 px-6 flex justify-between items-center">
       <motion.div
@@ -28,17 +27,19 @@ export function Header({ onCreateWallet, isCreating }: HeaderProps) {
         />
       </motion.div>
 
-      {/* Buttons Container */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.5 }}
         className="flex items-center gap-4"
       >
-        <LoginButton />
-        <CreateWalletButton onClick={onCreateWallet} isCreating={isCreating} />
+        <OutWalletButton
+          onClick={onGetStarted}
+          label="GET STARTED"
+          loadingLabel="Loading..."
+          isLoading={isLoading}
+        />
       </motion.div>
     </header>
   )
 }
-

@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-import { useStellarPayment } from "@/hooks/use-Stellar-Payment";
+import { useStellarPayment } from "@/hooks/use-stellar-payment";
 import {
   Dialog,
   DialogContent,

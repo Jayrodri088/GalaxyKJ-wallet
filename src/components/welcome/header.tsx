@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { CreateWalletButton } from "./create-wallet-button"
+import { LoginButton } from "@/components/layout/header/login-button"
 
 interface HeaderProps {
   onCreateWallet: () => void
@@ -27,12 +28,14 @@ export function Header({ onCreateWallet, isCreating }: HeaderProps) {
         />
       </motion.div>
 
-      {/* Create Wallet Button - Top Right */}
+      {/* Buttons Container */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.5 }}
+        className="flex items-center gap-4"
       >
+        <LoginButton />
         <CreateWalletButton onClick={onCreateWallet} isCreating={isCreating} />
       </motion.div>
     </header>

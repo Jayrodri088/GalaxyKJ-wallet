@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { MobileMenu } from "./mobile-menu"
+import { LoginButton } from "./login-button"
 
 export function Header() {
   const router = useRouter()
@@ -58,13 +59,16 @@ export function Header() {
           ))}
         </nav>
         
-        {/* Search Bar */}
-        <div className="hidden lg:flex relative w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Search transactions..."
-            className="pl-10 bg-gray-900/50 border-gray-800 focus:border-purple-500 text-white rounded-full"
-          />
+        {/* Search Bar and Login Button */}
+        <div className="hidden lg:flex items-center gap-4">
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search transactions..."
+              className="pl-10 bg-gray-900/50 border-gray-800 focus:border-purple-500 text-white rounded-full"
+            />
+          </div>
+          <LoginButton />
         </div>
         
         {/* Mobile Menu */}

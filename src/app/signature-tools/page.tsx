@@ -1,8 +1,9 @@
 'use client'; // Required for useState and event handlers
 
 import React from 'react';
+import CryptoTools from '@/components/signature-tools/hash-generator-tabs';
 // The component from this path now contains the entire toolset including tabs
-import CryptoTools from '@/components/signature-tools/hash-generator-tab';
+
 
 // No longer need individual tab imports or tab state management here
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -9,6 +9,7 @@ type MenuOption = {
   label: string
   icon: React.ReactNode
   href: string
+  available: boolean
 }
 
 interface MobileMenuProps {
@@ -17,6 +18,7 @@ interface MobileMenuProps {
 
 export function MobileMenu({ options }: MobileMenuProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -36,6 +38,17 @@ export function MobileMenu({ options }: MobileMenuProps) {
     }
   }, [open])
 
+  const isActiveRoute = (href: string) => {
+    return pathname === href
+  }
+
+  const handleOptionClick = (option: MenuOption) => {
+    if (option.available) {
+      router.push(option.href)
+      setOpen(false)
+    }
+  }
+
   return (
     <div className="relative z-50" ref={menuRef}>
       <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
@@ -47,14 +60,22 @@ export function MobileMenu({ options }: MobileMenuProps) {
           {options.map((option, index) => (
             <button
               key={index}
-              onClick={() => {
-                router.push(option.href)
-                setOpen(false)
-              }}
-              className="w-full flex items-center gap-3 p-2 rounded-md bg-gray-800/50 hover:bg-purple-900/50 text-purple-300 font-medium transition-transform duration-200 hover:scale-105"
+              onClick={() => handleOptionClick(option)}
+              disabled={!option.available}
+              className={`w-full flex items-center gap-3 p-2 rounded-md transition-all duration-200 ${
+                !option.available
+                  ? "bg-gray-800/30 text-gray-500 cursor-not-allowed opacity-50"
+                  : isActiveRoute(option.href)
+                  ? "bg-purple-900/70 text-purple-300 font-medium scale-105 shadow-lg"
+                  : "bg-gray-800/50 hover:bg-purple-900/50 text-purple-300 font-medium hover:scale-105"
+              }`}
+              title={!option.available ? "Coming soon" : undefined}
             >
               <span>{option.icon}</span>
               <span>{option.label}</span>
+              {!option.available && (
+                <span className="ml-auto text-xs text-gray-600">Soon</span>
+              )}
             </button>
           ))}
         </div>

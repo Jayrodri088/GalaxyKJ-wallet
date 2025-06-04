@@ -1,7 +1,8 @@
 "use client"
 
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
+import { useState, useRef } from "react"
 import {
   HelpCircle,
   Search,
@@ -16,6 +17,8 @@ import { Input } from "@/components/ui/input"
 import { MobileMenu } from "./mobile-menu"
 import { Button } from "@/components/ui/button"
 import { useWalletStore } from "@/store/wallet-store"
+import { useTransactionSearch } from "@/hooks/use-transaction-search"
+import { SearchResults } from "@/components/ui/search-results"
 
 interface HeaderProps {
   onCreateWallet: () => void
@@ -24,21 +27,107 @@ interface HeaderProps {
 
 export function Header({ onCreateWallet, onLogin }: HeaderProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const publicKey = useWalletStore((state) => state.publicKey)
   const setPublicKey = useWalletStore((state) => state.setPublicKey)
+  
+  // Search functionality
+  const [searchFocused, setSearchFocused] = useState(false)
+  const [showSearchResults, setShowSearchResults] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
+  const {
+    searchQuery,
+    setSearchQuery,
+    clearSearch,
+    transactions,
+    isSearching,
+    hasSearched,
+    hasResults,
+  } = useTransactionSearch()
 
+  // Menu options with corrected routes and availability
   const menuOptions = [
-    { label: "Converter", icon: <ArrowRightLeft className="h-4 w-4" />, href: "/converter" },
-    { label: "Learn", icon: <BookOpen className="h-4 w-4" />, href: "/education-center" },
-    { label: "Portfolio", icon: <LayoutGrid className="h-4 w-4" />, href: "/portfolio" },
-    { label: "Widgets", icon: <Grid3X3 className="h-4 w-4" />, href: "/widgets" },
-    { label: "Support", icon: <HelpCircle className="h-4 w-4" />, href: "/support" },
-    { label: "Settings", icon: <Settings className="h-4 w-4" />, href: "/settings" },
+    { 
+      label: "Converter", 
+      icon: <ArrowRightLeft className="h-4 w-4" />, 
+      href: "/cryptocurrency-converter",
+      available: true 
+    },
+    { 
+      label: "Learn", 
+      icon: <BookOpen className="h-4 w-4" />, 
+      href: "/education-center",
+      available: true 
+    },
+    { 
+      label: "Portfolio", 
+      icon: <LayoutGrid className="h-4 w-4" />, 
+      href: "/portfolio-analytics",
+      available: true 
+    },
+    { 
+      label: "Widgets", 
+      icon: <Grid3X3 className="h-4 w-4" />, 
+      href: "/widget-configuration",
+      available: true 
+    },
+    { 
+      label: "Support", 
+      icon: <HelpCircle className="h-4 w-4" />, 
+      href: "/support",
+      available: true 
+    },
+    { 
+      label: "Settings", 
+      icon: <Settings className="h-4 w-4" />, 
+      href: "/settings",
+      available: true 
+    },
   ]
 
   const handleLogout = () => {
     setPublicKey("")
     router.push("/")
+  }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchQuery(value)
+    setShowSearchResults(value.trim().length > 0)
+  }
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      // Navigate to transactions page with search
+      router.push(`/transactions?search=${encodeURIComponent(searchQuery)}`)
+      setShowSearchResults(false)
+    }
+  }
+
+  const handleSearchFocus = () => {
+    setSearchFocused(true)
+    if (searchQuery.trim()) {
+      setShowSearchResults(true)
+    }
+  }
+
+  const handleSearchBlur = () => {
+    setSearchFocused(false)
+    // Delay hiding results to allow clicking on them
+    setTimeout(() => {
+      if (!searchRef.current?.contains(document.activeElement)) {
+        setShowSearchResults(false)
+      }
+    }, 150)
+  }
+
+  const closeSearchResults = () => {
+    setShowSearchResults(false)
+    clearSearch()
+  }
+
+  const isActiveRoute = (href: string) => {
+    return pathname === href
   }
 
   return (
@@ -61,8 +150,16 @@ export function Header({ onCreateWallet, onLogin }: HeaderProps) {
           {menuOptions.map((option) => (
             <button
               key={option.label}
-              className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
-              onClick={() => router.push(option.href)}
+              className={`flex items-center gap-2 transition-colors ${
+                !option.available
+                  ? "text-gray-500 cursor-not-allowed opacity-50"
+                  : isActiveRoute(option.href)
+                  ? "text-purple-400 font-medium"
+                  : "text-gray-300 hover:text-white"
+              }`}
+              onClick={() => option.available && router.push(option.href)}
+              disabled={!option.available}
+              title={!option.available ? "Coming soon" : undefined}
             >
               {option.icon}
               <span>{option.label}</span>
@@ -71,11 +168,28 @@ export function Header({ onCreateWallet, onLogin }: HeaderProps) {
         </nav>
 
         <div className="hidden lg:flex items-center gap-4">
-          <div className="relative w-64">
+          <div className="relative w-64" ref={searchRef}>
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Search transactions..."
-              className="pl-10 bg-gray-900/50 border-gray-800 focus:border-purple-500 text-white rounded-full"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
+              className={`pl-10 bg-gray-900/50 border-gray-800 focus:border-purple-500 text-white rounded-full transition-all ${
+                searchFocused ? "ring-1 ring-purple-500/50" : ""
+              }`}
+            />
+            
+            <SearchResults
+              transactions={transactions}
+              isSearching={isSearching}
+              hasSearched={hasSearched}
+              hasResults={hasResults}
+              searchQuery={searchQuery}
+              onClose={closeSearchResults}
+              isVisible={showSearchResults}
             />
           </div>
 

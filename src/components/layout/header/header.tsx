@@ -131,7 +131,7 @@ export function Header({ onCreateWallet, onLogin }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full backdrop-blur-md border-b border-gray-800 py-3 px-4">
+    <header className="sticky top-0 z-50 w-full backdrop-blur-md border-b border-gray-800 py-3 ">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push("/")}>
           <Image
@@ -141,34 +141,39 @@ export function Header({ onCreateWallet, onLogin }: HeaderProps) {
             height={40}
             className="object-contain"
           />
-          <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+          <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
             Galaxy Smart Wallet
           </h1>
         </div>
 
-        <nav className="hidden md:flex items-center space-x-6">
-          {menuOptions.map((option) => (
-            <button
-              key={option.label}
-              className={`flex items-center gap-2 transition-colors ${
-                !option.available
-                  ? "text-gray-500 cursor-not-allowed opacity-50"
-                  : isActiveRoute(option.href)
-                  ? "text-purple-400 font-medium"
-                  : "text-gray-300 hover:text-white"
-              }`}
-              onClick={() => option.available && router.push(option.href)}
-              disabled={!option.available}
-              title={!option.available ? "Coming soon" : undefined}
-            >
-              {option.icon}
-              <span>{option.label}</span>
-            </button>
-          ))}
+        {/* Navigation Section */}
+        <nav className="hidden xl:flex items-center justify-center flex-1 max-w-4xl mx-8">
+          <div className="flex items-center space-x-8">
+            {menuOptions.map((option) => (
+              <button
+                key={option.label}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${
+                  !option.available
+                    ? "text-gray-500 cursor-not-allowed opacity-50"
+                    : isActiveRoute(option.href)
+                    ? "text-white bg-purple-900/30 font-medium shadow-lg"
+                    : "text-gray-300 hover:text-white hover:bg-gray-800/50"
+                }`}
+                onClick={() => option.available && router.push(option.href)}
+                disabled={!option.available}
+                title={!option.available ? "Coming soon" : undefined}
+              >
+                {option.icon}
+                <span className="text-sm font-medium">{option.label}</span>
+              </button>
+            ))}
+          </div>
         </nav>
 
-        <div className="hidden lg:flex items-center gap-4">
-          <div className="relative w-64" ref={searchRef}>
+        {/* Right Section - Search & Auth */}
+        <div className="flex items-center gap-4 flex-shrink-0">
+          {/* Search Bar - Hidden on smaller screens */}
+          <div className="hidden xl:block relative" ref={searchRef}>
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Search transactions..."
@@ -193,25 +198,27 @@ export function Header({ onCreateWallet, onLogin }: HeaderProps) {
             />
           </div>
 
+          {/* Auth Buttons */}
           {!publicKey ? (
-            <>
+            <div className="hidden lg:flex items-center gap-3">
               <Button onClick={onLogin}>Login</Button>
               <Button onClick={onCreateWallet}>Create Wallet</Button>
-            </>
+            </div>
           ) : (
             <Button
               variant="outline"
               onClick={handleLogout}
-              className="border-gray-700 text-gray-300 hover:text-white hover:border-gray-500"
+              className="hidden lg:flex border-gray-700 text-gray-300 hover:text-white hover:border-gray-500 hover:bg-gray-800/50"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>
           )}
-        </div>
 
-        <div className="md:hidden">
-          <MobileMenu options={menuOptions} />
+          {/* Mobile Menu */}
+          <div className="xl:hidden">
+            <MobileMenu options={menuOptions} />
+          </div>
         </div>
       </div>
     </header>

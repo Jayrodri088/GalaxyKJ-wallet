@@ -31,9 +31,13 @@ export function useStellarPayment(sourceSecret: string) {
         estimatedFee: feeXLM,
         estimatedTime: 5,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
+      let errorMessage = "Unknown_error_while_estimating_transaction";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
       return {
-        error: err.message || "Unknown_error_while_estimating_transaction",
+        error: errorMessage,
       };
     }
   };
@@ -95,8 +99,12 @@ export function useStellarPayment(sourceSecret: string) {
       console.log(response);
 
       setTxResult({ success: true, hash: response.hash });
-    } catch (err: any) {
-      setTxResult({ success: false, error: err.message || "Unknown error" });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setTxResult({ success: false, error: err.message });
+      } else {
+        setTxResult({ success: false, error: "Unknown error" });
+      }
     } finally {
       setLoading(false);
     }

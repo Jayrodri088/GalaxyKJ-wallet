@@ -62,7 +62,7 @@ export function SendForm() {
       }
     };
     fetchEstimations();
-  }, []);
+  }, [estimations]);
 
   // Show result modal when txResult changes
   useEffect(() => {

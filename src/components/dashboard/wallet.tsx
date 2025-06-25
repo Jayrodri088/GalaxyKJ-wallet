@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
-import { StarBackground } from "@/components/effects/star-background";
-import { BalanceDisplay } from "@/components/dashboard/balance-display";
-import { FinancialCharts } from "@/components/dashboard/financial-charts";
-import { TransactionHistory } from "@/components/dashboard/transaction-history";
-import { WalletActions } from "@/components/dashboard/wallet-actions";
-import { RightPanelTabs } from "@/components/dashboard/right-panel-tabs";
-import { Header } from "@/components/layout/header/header";
+import { StarBackground } from "@/components/effects/star-background"
+import { BalanceDisplay } from "@/components/dashboard/balance-display"
+import { FinancialCharts } from "@/components/dashboard/financial-charts"
+import { TransactionHistory } from "@/components/dashboard/transaction-history"
+import { WalletActions } from "@/components/dashboard/wallet-actions"
+import { RightPanelTabs } from "@/components/dashboard/right-panel-tabs"
+import { Header } from "@/components/layout/header/header"
 
 export function Wallet() {
   return (
@@ -30,5 +30,5 @@ export function Wallet() {
         </div>
       </div>
     </div>
-  );
+  )
 }

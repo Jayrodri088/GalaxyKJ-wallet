@@ -115,4 +115,5 @@ const GlossaryItem = ({ item }: { item: (typeof glossaryData)[number] }) => {
   );
 };
 
+export { CryptoGlossary };
 export default CryptoGlossary;

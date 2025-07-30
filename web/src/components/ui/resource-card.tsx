@@ -19,7 +19,7 @@ export default function ResourceCard({ heading, content, level, category, labelI
             className="min-w-[300px] max-w-[500px] min-h-[180px] bg-[#13182A] backdrop-blur-md border-[1px] border-[#374151] m-2 rounded-lg px-7 py-8 flex flex-col items-start gap-7"
         >
             <div className="w-full flex items-center justify-items-start gap-4">
-                <label>{labelIcon()}</label>
+                <label>{labelIcon}</label>
                 <label className="bg-[#F1F5F9] py-1 px-3 rounded-[18px] text-xs font-medium text-[#000000]">{category}</label>
                 <label className="bg-transparent py-1 px-3 rounded-[18px] text-xs font-medium text-[#040B1A] border-[1px] border-[#F1F5F9]">{level}</label>
             </div>

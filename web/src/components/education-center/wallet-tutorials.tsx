@@ -61,7 +61,9 @@ export function WalletTutorials() {
     },
   ];
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getCategoryBadgeStyle = (category: string) => {
+    // You can customize colors based on category if needed
     return "bg-white text-black";
   };
 

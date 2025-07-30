@@ -36,7 +36,7 @@ export function CosmicErrorPage({
       transition: {
         duration: 3,
         repeat: Infinity,
-        repeatType: "loop" as "loop",
+        repeatType: "loop" as const,
         ease: "easeInOut",
       },
     },
@@ -49,7 +49,7 @@ export function CosmicErrorPage({
       transition: {
         duration: 6,
         repeat: Infinity,
-        repeatType: "loop" as "loop",
+        repeatType: "loop" as const,
         ease: "easeInOut",
       },
     },

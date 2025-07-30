@@ -14,7 +14,6 @@ import {
   Filler,
   ChartOptions,
   ChartData,
-  Tick,
 } from "chart.js";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -111,7 +110,7 @@ export function ActivitySummary() {
           font: {
             size: 11,
           },
-          callback: (tickValue: Tick["value"]) => `${tickValue} XLM`,
+          callback: (tickValue: string | number) => `${tickValue} XLM`,
         },
       },
     },

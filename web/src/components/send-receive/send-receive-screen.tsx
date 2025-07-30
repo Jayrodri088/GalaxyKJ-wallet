@@ -14,7 +14,7 @@ export function SendReceiveScreen() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  const tabFromURL = searchParams.get("tab") || "send"
+  const tabFromURL = searchParams?.get("tab") || "send"
   const [activeTab, setActiveTab] = useState(tabFromURL)
 
   useEffect(() => {

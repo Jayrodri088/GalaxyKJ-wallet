@@ -58,14 +58,12 @@ export function ReceiveForm() {
           toast({
             title: "Error sharing",
             description: "Could not share address",
-            variant: "destructive",
           });
         });
     } else {
       toast({
         title: "Share not supported",
         description: "Your browser doesn't support the Web Share API",
-        variant: "destructive",
       });
     }
   };

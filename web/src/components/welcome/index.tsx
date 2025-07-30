@@ -61,9 +61,9 @@ export function WelcomeScreen() {
       const db = await initDB()
       const tx = db.transaction("encrypted-wallet", "readonly")
       const store = tx.objectStore("encrypted-wallet")
-      const wallet = await store.index("wallet").get("wallet")
+      const wallets = await store.getAll()
       
-      if (wallet) {
+      if (wallets && wallets.length > 0) {
         setIsLoginModalOpen(true)
       } else {
         setIsCreateModalOpen(true)
@@ -73,7 +73,7 @@ export function WelcomeScreen() {
       await tx.done
     } catch (error) {
       console.error("Error accessing wallet:", error)
-      // Si hay un error, asumimos que no hay wallet y mostramos la pantalla de creación
+      // If there's an error, assume no wallet exists and show creation screen
       setIsCreateModalOpen(true)
     }
   }

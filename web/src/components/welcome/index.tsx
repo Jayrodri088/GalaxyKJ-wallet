@@ -5,6 +5,29 @@ import { useRouter } from "next/navigation"
 import { useScroll } from "framer-motion"
 import { openDB } from "idb"
 
+// Initialize the database with proper schema while preserving existing data
+const initDB = async () => {
+  try {
+    const db = await openDB("galaxy-wallet-db", 1, {
+      upgrade(db) {
+        // Create the object store if it doesn't exist
+        if (!db.objectStoreNames.contains("encrypted-wallet")) {
+          const store = db.createObjectStore("encrypted-wallet", {
+            keyPath: "id",
+            autoIncrement: true
+          })
+          // Create any indexes if needed
+          store.createIndex("wallet", "wallet", { unique: false })
+        }
+      },
+    })
+    return db
+  } catch (error) {
+    console.error("Error initializing database:", error)
+    throw error
+  }
+}
+
 import { StarBackground } from "@/components/effects/star-background"
 import { ShootingStarsEffect } from "@/components/effects/shooting-stars-effect"
 import { Header } from "./header"
@@ -34,11 +57,23 @@ export function WelcomeScreen() {
   }
 
   const handleGetStarted = async () => {
-    const db = await openDB("galaxy-wallet-db", 1)
-    const wallet = await db.get("encrypted-wallet", "wallet")
-    if (wallet) {
-      setIsLoginModalOpen(true)
-    } else {
+    try {
+      const db = await initDB()
+      const tx = db.transaction("encrypted-wallet", "readonly")
+      const store = tx.objectStore("encrypted-wallet")
+      const wallets = await store.getAll()
+      
+      if (wallets && wallets.length > 0) {
+        setIsLoginModalOpen(true)
+      } else {
+        setIsCreateModalOpen(true)
+      }
+      
+      // Close the transaction
+      await tx.done
+    } catch (error) {
+      console.error("Error accessing wallet:", error)
+      // If there's an error, assume no wallet exists and show creation screen
       setIsCreateModalOpen(true)
     }
   }

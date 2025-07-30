@@ -19,11 +19,11 @@ export default function NetworkFeeCalculator() {
   const fee = calculateFee()
 
   // Handle speed change
-  const handleSpeedChange = (newSpeed: number) => {
-    if (newSpeed >= 1 && newSpeed <= 3) {
-      setSpeed(newSpeed)
-    }
-  }
+  // const handleSpeedChange = (newSpeed: number) => {
+  //   if (newSpeed >= 1 && newSpeed <= 3) {
+  //     setSpeed(newSpeed)
+  //   }
+  // }
 
   return (
     <div className="bg-gray-900/50 border border-gray-800 rounded-xl">

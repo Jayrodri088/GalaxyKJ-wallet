@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { TransactionHistory } from "@/components/transactions/transaction-list";
 import { ActivitySummary } from "@/components/transactions/activity-summary";
 import { TransactionStats } from "@/components/transactions/transaction-stats";
@@ -23,7 +24,9 @@ export default function Transactions() {
                 Transaction History
               </h1>
             </div>
-            <SearchBar />
+            <Suspense fallback={<div className="w-64 h-10 bg-gray-800 rounded animate-pulse" />}>
+              <SearchBar />
+            </Suspense>
           </div>
 
           <div className="grid grid-cols-12 gap-6">

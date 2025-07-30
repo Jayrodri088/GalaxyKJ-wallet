@@ -28,7 +28,9 @@ type Transaction = {
 export function TransactionHistory() {
   const publicKey = "GAFGGL7IZTHXC6REXWCIZYS7L547XY63R5JUCOKSZNXO6SMQBSLUWLTV";
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | TransactionType>("all");
   const router = useRouter();

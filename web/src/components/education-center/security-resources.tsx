@@ -2,7 +2,7 @@ import securityProps from "@/data/education-center-data";
 import ResourceCard from "@/components/ui/resource-card";
 import { CircleCheckBig, Download, Shield, Wrench } from "lucide-react";
 
-export default function SecurityResources() {
+function SecurityResources() {
     return (
         <div className="w-full h-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4"  >
 
@@ -34,7 +34,7 @@ export default function SecurityResources() {
                             content={item.content}
                             category={item.category}
                             level={item.level}
-                            labelIcon={LabelIcon}
+                            labelIcon={<LabelIcon />}
                         />
                     )
                 })
@@ -45,3 +45,6 @@ export default function SecurityResources() {
         </div>
     )
 }
+
+export { SecurityResources };
+export default SecurityResources;

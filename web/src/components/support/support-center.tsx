@@ -17,6 +17,7 @@ export function SupportCenter() {
   const router = useRouter()
   const [showChatbot, setShowChatbot] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTab, setActiveTab] = useState("faq")
 
 
@@ -257,7 +258,7 @@ export function SupportCenter() {
                   <TabsContent value="faq" className="mt-0">
                     {searchQuery && filteredFAQs.length === 0 ? (
                       <div className="text-center py-8">
-                        <p className="text-gray-400">No results found for "{searchQuery}"</p>
+                        <p className="text-gray-400">No results found for &quot;{searchQuery}&quot;</p>
                         <Button variant="link" className="text-purple-400 mt-2" onClick={() => setSearchQuery("")}>
                           Clear search
                         </Button>
@@ -296,7 +297,7 @@ export function SupportCenter() {
 
                       {supportTickets.length === 0 ? (
                         <div className="text-center py-8">
-                          <p className="text-gray-400">You don't have any support tickets</p>
+                          <p className="text-gray-400">You don&apos;t have any support tickets</p>
                         </div>
                       ) : (
                         <div className="space-y-3">

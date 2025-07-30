@@ -72,7 +72,7 @@ export function StellarBlockchainIllustration() {
       particleTime += 0.005
 
 
-      nodes.forEach((node, i) => {
+      nodes.forEach((node) => {
         node.connections.forEach((targetIndex) => {
           const target = nodes[targetIndex]
           ctx.beginPath()

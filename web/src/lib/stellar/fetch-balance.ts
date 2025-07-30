@@ -8,8 +8,9 @@ export async function fetchStellarBalance(publicKey: string): Promise<number> {
     const account = await server.loadAccount(publicKey);
     const nativeBalance = account.balances.find((b) => b.asset_type === "native");
     return parseFloat(nativeBalance?.balance || "0");
-  } catch (err: any) {
-    console.error("❌ Error fetching balance:", err.message || err);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.error("❌ Error fetching balance:", errorMessage);
     throw err;
   }
 }

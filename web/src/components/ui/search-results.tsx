@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowUpRight, ArrowDownLeft, RefreshCw, Search, X, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
@@ -117,7 +117,7 @@ export function SearchResults({
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-gray-400" />
               <span className="text-sm text-gray-400">
-                Search results for "{searchQuery}"
+                Search results for &quot;{searchQuery}&quot;
               </span>
             </div>
             <Button variant="ghost" size="sm" onClick={onClose}>

@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-import { useStellarPayment } from "@/hooks/use-stellar-payment";
+import { useStellarPayment } from "@/hooks/use-stellar-payments";
 import {
   Dialog,
   DialogContent,
@@ -102,7 +102,6 @@ export function SendForm() {
       toast({
         title: "Could not access clipboard",
         description: "Please paste the address manually",
-        variant: "destructive",
       });
     }
   };
@@ -146,7 +145,6 @@ export function SendForm() {
       toast({
         title: "Transaction Failed",
         description: txResult.error,
-        variant: "destructive",
       });
     }
   };

@@ -19,7 +19,7 @@ export function SearchBar({
 }: SearchBarProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [searchQuery, setSearchQuery] = useState(initialValue || searchParams.get('search') || '')
+  const [searchQuery, setSearchQuery] = useState(initialValue || searchParams?.get('search') || '')
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -40,7 +40,7 @@ export function SearchBar({
   const handleSearch = () => {
     if (searchQuery.trim()) {
       // Update URL with search parameter
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(searchParams?.toString())
       params.set('search', searchQuery.trim())
       router.push(`/transactions?${params.toString()}`)
     }
@@ -53,7 +53,7 @@ export function SearchBar({
     }
     
     // Remove search parameter from URL
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams?.toString())
     params.delete('search')
     const newUrl = params.toString() ? `/transactions?${params.toString()}` : '/transactions'
     router.push(newUrl)

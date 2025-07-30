@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { keccak256 } from "js-sha3";
 import { SignMessageTab } from "@/components/signature-tools/sign-message-tab";
+import VerifySignatureTab from "@/components/signature-tools/verify-signature-tab";
 
 // Define supported algorithms compatible with SubtleCrypto and js-sha3
 type Algorithm = "SHA-256" | "SHA-512" | "Keccak-256";
@@ -164,6 +165,7 @@ const HashGeneratorTab: React.FC = () => {
         </div>
 
         {activeTab === "Sign Message" && <SignMessageTab />}
+        {activeTab === "Verify Signature" && <VerifySignatureTab />}
 
         {/* Conditionally render Hash Generator Content based on activeTab */}
         {activeTab === "Hash Generator" && (

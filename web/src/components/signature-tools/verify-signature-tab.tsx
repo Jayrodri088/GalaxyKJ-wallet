@@ -56,10 +56,19 @@ const VerifySignatureTab: React.FC = () => {
       return "Invalid Stellar public key format. Expected a 56-character key starting with 'G'.";
     }
 
+    // Additional validation for public key format
+    if (!/^G[A-Z2-7]{55}$/.test(form.publicKey)) {
+      return "Invalid Stellar public key format. The key contains invalid characters.";
+    }
+
     // Validate base64 signature format
     try {
       // Check if it's valid base64
-      atob(form.signature);
+      const decoded = atob(form.signature);
+      // Check if decoded signature has reasonable size (Stellar signatures are typically 64 bytes)
+      if (decoded.length < 32 || decoded.length > 128) {
+        return "Invalid signature size. Expected a base64-encoded signature of reasonable length.";
+      }
     } catch {
       return "Invalid signature format. Expected base64-encoded signature.";
     }
@@ -98,12 +107,26 @@ const VerifySignatureTab: React.FC = () => {
       }
     } catch (err) {
       console.error("Verification error:", err);
+      
+      // Set result to false for any verification error
+      setResult(false);
+      
       if (err instanceof Error) {
-        setError(`Verification failed: ${err.message}`);
+        // Handle specific Stellar SDK errors with user-friendly messages
+        if (err.message.includes("bad signature size")) {
+          setError("Invalid signature: The signature size is incorrect for this public key.");
+        } else if (err.message.includes("invalid encoded string")) {
+          setError("Invalid public key format: Please check that the public key is correct.");
+        } else if (err.message.includes("signature")) {
+          setError("Invalid signature format: Please check that the signature is properly base64-encoded.");
+        } else if (err.message.includes("key")) {
+          setError("Invalid public key: Please check that the Stellar public key is correct.");
+        } else {
+          setError(`Verification failed: ${err.message}`);
+        }
       } else {
         setError("Verification failed: Unknown error occurred.");
       }
-      setResult(null);
     } finally {
       setIsLoading(false);
     }

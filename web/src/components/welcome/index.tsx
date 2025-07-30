@@ -3,14 +3,11 @@
 import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useScroll } from "framer-motion"
-import { openDB, deleteDB } from "idb"
+import { openDB } from "idb"
 
-// Initialize the database
+// Initialize the database with proper schema while preserving existing data
 const initDB = async () => {
   try {
-    // First, try to delete any existing database to ensure a clean slate
-    await deleteDB("galaxy-wallet-db")
-    
     const db = await openDB("galaxy-wallet-db", 1, {
       upgrade(db) {
         // Create the object store if it doesn't exist

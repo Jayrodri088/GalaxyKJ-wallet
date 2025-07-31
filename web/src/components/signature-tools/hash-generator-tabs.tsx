@@ -12,6 +12,7 @@ import {
 import { keccak256 } from "js-sha3";
 import { SignMessageTab } from "@/components/signature-tools/sign-message-tab";
 import VerifySignatureTab from "@/components/signature-tools/verify-signature-tab";
+import { ProofOfOwnershipTab } from "@/components/signature-tools/proof-of-ownership-tab";
 
 // Define supported algorithms compatible with SubtleCrypto and js-sha3
 type Algorithm = "SHA-256" | "SHA-512" | "Keccak-256";
@@ -162,10 +163,9 @@ const HashGeneratorTab: React.FC = () => {
             <FileDigit size={16} />
             <span>Hash Generator</span>
           </button>
-        </div>
-
-        {activeTab === "Sign Message" && <SignMessageTab />}
-        {activeTab === "Verify Signature" && <VerifySignatureTab />}
+        </div>{activeTab === "Sign Message" && <SignMessageTab />}
+{activeTab === "Verify Signature" && <VerifySignatureTab />}
+{activeTab === "Proof of Ownership" && <ProofOfOwnershipTab />}
 
         {/* Conditionally render Hash Generator Content based on activeTab */}
         {activeTab === "Hash Generator" && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Keypair } from "@stellar/stellar-sdk";
 import {
   Lock,
   AlertTriangle,
@@ -8,6 +9,8 @@ import {
   ShieldCheck,
   CheckCircle,
   FileCheck,
+  Copy,
+  CheckCircle2,
 } from "lucide-react";
 
 export function SignMessageTab() {
@@ -15,24 +18,76 @@ export function SignMessageTab() {
   const [privateKey, setPrivateKey] = useState("");
   const [signature, setSignature] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [signedSuccessfully, setSignedSuccessfully] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
 
-  const handleSignMessage = () => {
+  const handleSignMessage = async () => {
     setIsLoading(true);
+    setError(null);
+    setSignature("");
+    setSignedSuccessfully(false);
+    setCopySuccess(false);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      if (message && privateKey) {
-        setSignature(
-          "0x7f9b1a7fb1d48e332fc5d52a255e6c3d0b58ae6da6b40ce9bd4c7e8bf0212ae6d7a1a7a9b1a7fb1d48e332fc5d52a255e6c3d0b58ae6da6b40ce9bd4c7e8bf0212ae6d7a1"
-        );
+    try {
+      if (!message || !privateKey) {
+        throw new Error("Please fill in all required fields");
       }
-    }, 1000);
+
+      // Create keypair from private key (secret key)
+      const keypair = Keypair.fromSecret(privateKey);
+      
+      // Create message buffer from UTF-8 string
+      const messageBuffer = Buffer.from(message, 'utf8');
+
+      // Sign the message
+      const signatureBuffer = keypair.sign(messageBuffer);
+
+      // Convert to base64
+      const base64Signature = signatureBuffer.toString('base64');
+      
+      setSignature(base64Signature);
+      setSignedSuccessfully(true);
+    } catch (error) {
+      let errorMessage = "Unknown error occurred while signing";
+      if (error instanceof Error) {
+        if (error.message.includes("Invalid seed") || error.message.includes("secret")) {
+          errorMessage = "Invalid private key format. Please check your private key.";
+        } else if (error.message.includes("checksum")) {
+          errorMessage = "Invalid private key checksum. Please verify your private key.";
+        } else if (error.message.includes("base32")) {
+          errorMessage = "Private key must be in valid Stellar format (starts with 'S').";
+        } else {
+          errorMessage = "Failed to sign message. Please check your inputs and try again.";
+        }
+      }
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleReset = () => {
     setMessage("");
     setPrivateKey("");
     setSignature("");
+    setError(null);
+    setSignedSuccessfully(false);
+    setCopySuccess(false);
+  };
+
+  const handleCopySignature = async () => {
+    if (signature) {
+      try {
+        await navigator.clipboard.writeText(signature);
+        setCopySuccess(true);
+        // Reset success message after 2 seconds
+        setTimeout(() => setCopySuccess(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy signature:', err);
+        setError('Failed to copy signature to clipboard. Please try selecting and copying manually.');
+      }
+    }
   };
 
   return (
@@ -82,6 +137,22 @@ export function SignMessageTab() {
             </p>
           </div>
 
+          {/* Error Display */}
+          {error && (
+            <div className="bg-red-900/30 border border-red-700 text-red-200 p-3 rounded flex items-center text-sm">
+              <AlertTriangle size={16} className="mr-2" />
+              {error}
+            </div>
+          )}
+
+          {/* Success Display */}
+          {signedSuccessfully && signature && (
+            <div className="bg-green-900/30 border border-green-700 text-green-200 p-3 rounded flex items-center text-sm">
+              <CheckCircle2 size={16} className="mr-2" />
+              Message signed successfully! Your signature is ready to use.
+            </div>
+          )}
+
           <div className="flex gap-3 pt-2">
             <button
               onClick={handleSignMessage}
@@ -129,12 +200,34 @@ export function SignMessageTab() {
           </div>
 
           {signature && (
-            <div className="mt-4 p-4 bg-gray-800/30 border border-gray-700 rounded-lg">
-              <h3 className="text-sm font-medium text-gray-200 mb-2">
-                Generated Signature:
-              </h3>
-              <p className="text-xs text-gray-300 break-all font-mono">
-                {signature}
+            <div className="mt-4 space-y-2">
+              <label className="block text-sm font-medium text-gray-200">
+                Generated Signature (Base64):
+              </label>
+              <div className="relative">
+                <textarea
+                  value={signature}
+                  readOnly
+                  className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-gray-300 h-24 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-purple-400 transition-colors"
+                />
+                <button
+                  onClick={handleCopySignature}
+                  className={`absolute right-2 top-2 p-2 rounded-md transition-colors ${
+                    copySuccess 
+                      ? "bg-green-700 hover:bg-green-600" 
+                      : "bg-gray-800 hover:bg-gray-700"
+                  }`}
+                  title={copySuccess ? "Copied!" : "Copy signature"}
+                >
+                  {copySuccess ? (
+                    <CheckCircle2 size={16} className="text-green-200" />
+                  ) : (
+                    <Copy size={16} className="text-gray-400" />
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                This signature can be used to verify the message was signed by the owner of the private key.
               </p>
             </div>
           )}

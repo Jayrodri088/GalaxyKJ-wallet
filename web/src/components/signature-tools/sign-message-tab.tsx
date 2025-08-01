@@ -20,47 +20,48 @@ export function SignMessageTab() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signedSuccessfully, setSignedSuccessfully] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const handleSignMessage = async () => {
     setIsLoading(true);
     setError(null);
     setSignature("");
     setSignedSuccessfully(false);
+    setCopySuccess(false);
 
     try {
       if (!message || !privateKey) {
         throw new Error("Please fill in all required fields");
       }
 
-      console.log('Attempting to sign message with:', {
-        privateKeyLength: privateKey.length,
-        messageLength: message.length
-      });
-
       // Create keypair from private key (secret key)
       const keypair = Keypair.fromSecret(privateKey);
       
-      // Log information for debugging
-      console.log('Successfully created keypair');
-      console.log('Derived public key:', keypair.publicKey());
-
       // Create message buffer from UTF-8 string
       const messageBuffer = Buffer.from(message, 'utf8');
-      console.log('Message buffer created:', messageBuffer.length, 'bytes');
 
       // Sign the message
       const signatureBuffer = keypair.sign(messageBuffer);
-      console.log('Signature buffer created:', signatureBuffer.length, 'bytes');
 
       // Convert to base64
       const base64Signature = signatureBuffer.toString('base64');
-      console.log('Base64 signature length:', base64Signature.length);
       
       setSignature(base64Signature);
       setSignedSuccessfully(true);
     } catch (error) {
-      console.error("Error signing message:", error);
-      setError(error instanceof Error ? error.message : "Unknown error occurred while signing");
+      let errorMessage = "Unknown error occurred while signing";
+      if (error instanceof Error) {
+        if (error.message.includes("Invalid seed") || error.message.includes("secret")) {
+          errorMessage = "Invalid private key format. Please check your private key.";
+        } else if (error.message.includes("checksum")) {
+          errorMessage = "Invalid private key checksum. Please verify your private key.";
+        } else if (error.message.includes("base32")) {
+          errorMessage = "Private key must be in valid Stellar format (starts with 'S').";
+        } else {
+          errorMessage = "Failed to sign message. Please check your inputs and try again.";
+        }
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -72,11 +73,20 @@ export function SignMessageTab() {
     setSignature("");
     setError(null);
     setSignedSuccessfully(false);
+    setCopySuccess(false);
   };
 
-  const handleCopySignature = () => {
+  const handleCopySignature = async () => {
     if (signature) {
-      navigator.clipboard.writeText(signature);
+      try {
+        await navigator.clipboard.writeText(signature);
+        setCopySuccess(true);
+        // Reset success message after 2 seconds
+        setTimeout(() => setCopySuccess(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy signature:', err);
+        setError('Failed to copy signature to clipboard. Please try selecting and copying manually.');
+      }
     }
   };
 
@@ -202,10 +212,18 @@ export function SignMessageTab() {
                 />
                 <button
                   onClick={handleCopySignature}
-                  className="absolute right-2 top-2 p-2 bg-gray-800 rounded-md hover:bg-gray-700 transition-colors"
-                  title="Copy signature"
+                  className={`absolute right-2 top-2 p-2 rounded-md transition-colors ${
+                    copySuccess 
+                      ? "bg-green-700 hover:bg-green-600" 
+                      : "bg-gray-800 hover:bg-gray-700"
+                  }`}
+                  title={copySuccess ? "Copied!" : "Copy signature"}
                 >
-                  <Copy size={16} className="text-gray-400" />
+                  {copySuccess ? (
+                    <CheckCircle2 size={16} className="text-green-200" />
+                  ) : (
+                    <Copy size={16} className="text-gray-400" />
+                  )}
                 </button>
               </div>
               <p className="text-xs text-gray-500">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Keypair } from "@stellar/stellar-sdk";
 import {
   Lock,
   AlertTriangle,
@@ -8,6 +9,8 @@ import {
   ShieldCheck,
   CheckCircle,
   FileCheck,
+  Copy,
+  CheckCircle2,
 } from "lucide-react";
 
 export function SignMessageTab() {
@@ -15,24 +18,66 @@ export function SignMessageTab() {
   const [privateKey, setPrivateKey] = useState("");
   const [signature, setSignature] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [signedSuccessfully, setSignedSuccessfully] = useState(false);
 
-  const handleSignMessage = () => {
+  const handleSignMessage = async () => {
     setIsLoading(true);
+    setError(null);
+    setSignature("");
+    setSignedSuccessfully(false);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      if (message && privateKey) {
-        setSignature(
-          "0x7f9b1a7fb1d48e332fc5d52a255e6c3d0b58ae6da6b40ce9bd4c7e8bf0212ae6d7a1a7a9b1a7fb1d48e332fc5d52a255e6c3d0b58ae6da6b40ce9bd4c7e8bf0212ae6d7a1"
-        );
+    try {
+      if (!message || !privateKey) {
+        throw new Error("Please fill in all required fields");
       }
-    }, 1000);
+
+      console.log('Attempting to sign message with:', {
+        privateKeyLength: privateKey.length,
+        messageLength: message.length
+      });
+
+      // Create keypair from private key (secret key)
+      const keypair = Keypair.fromSecret(privateKey);
+      
+      // Log information for debugging
+      console.log('Successfully created keypair');
+      console.log('Derived public key:', keypair.publicKey());
+
+      // Create message buffer from UTF-8 string
+      const messageBuffer = Buffer.from(message, 'utf8');
+      console.log('Message buffer created:', messageBuffer.length, 'bytes');
+
+      // Sign the message
+      const signatureBuffer = keypair.sign(messageBuffer);
+      console.log('Signature buffer created:', signatureBuffer.length, 'bytes');
+
+      // Convert to base64
+      const base64Signature = signatureBuffer.toString('base64');
+      console.log('Base64 signature length:', base64Signature.length);
+      
+      setSignature(base64Signature);
+      setSignedSuccessfully(true);
+    } catch (error) {
+      console.error("Error signing message:", error);
+      setError(error instanceof Error ? error.message : "Unknown error occurred while signing");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleReset = () => {
     setMessage("");
     setPrivateKey("");
     setSignature("");
+    setError(null);
+    setSignedSuccessfully(false);
+  };
+
+  const handleCopySignature = () => {
+    if (signature) {
+      navigator.clipboard.writeText(signature);
+    }
   };
 
   return (
@@ -82,6 +127,22 @@ export function SignMessageTab() {
             </p>
           </div>
 
+          {/* Error Display */}
+          {error && (
+            <div className="bg-red-900/30 border border-red-700 text-red-200 p-3 rounded flex items-center text-sm">
+              <AlertTriangle size={16} className="mr-2" />
+              {error}
+            </div>
+          )}
+
+          {/* Success Display */}
+          {signedSuccessfully && signature && (
+            <div className="bg-green-900/30 border border-green-700 text-green-200 p-3 rounded flex items-center text-sm">
+              <CheckCircle2 size={16} className="mr-2" />
+              Message signed successfully! Your signature is ready to use.
+            </div>
+          )}
+
           <div className="flex gap-3 pt-2">
             <button
               onClick={handleSignMessage}
@@ -129,12 +190,26 @@ export function SignMessageTab() {
           </div>
 
           {signature && (
-            <div className="mt-4 p-4 bg-gray-800/30 border border-gray-700 rounded-lg">
-              <h3 className="text-sm font-medium text-gray-200 mb-2">
-                Generated Signature:
-              </h3>
-              <p className="text-xs text-gray-300 break-all font-mono">
-                {signature}
+            <div className="mt-4 space-y-2">
+              <label className="block text-sm font-medium text-gray-200">
+                Generated Signature (Base64):
+              </label>
+              <div className="relative">
+                <textarea
+                  value={signature}
+                  readOnly
+                  className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-gray-300 h-24 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-purple-400 transition-colors"
+                />
+                <button
+                  onClick={handleCopySignature}
+                  className="absolute right-2 top-2 p-2 bg-gray-800 rounded-md hover:bg-gray-700 transition-colors"
+                  title="Copy signature"
+                >
+                  <Copy size={16} className="text-gray-400" />
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                This signature can be used to verify the message was signed by the owner of the private key.
               </p>
             </div>
           )}

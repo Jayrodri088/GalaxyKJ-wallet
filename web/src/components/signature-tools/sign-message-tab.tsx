@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Keypair } from "@stellar/stellar-sdk";
+import { validateStellarSecretKey, getValidationClassName } from "@/lib/stellar/validation";
 import {
   Lock,
   AlertTriangle,
@@ -21,6 +22,16 @@ export function SignMessageTab() {
   const [error, setError] = useState<string | null>(null);
   const [signedSuccessfully, setSignedSuccessfully] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [privateKeyValidation, setPrivateKeyValidation] = useState<{ isValid: boolean; error?: string } | null>(null);
+
+  useEffect(() => {
+    if (privateKey.trim()) {
+      const validation = validateStellarSecretKey(privateKey);
+      setPrivateKeyValidation(validation);
+    } else {
+      setPrivateKeyValidation(null);
+    }
+  }, [privateKey]);
 
   const handleSignMessage = async () => {
     setIsLoading(true);
@@ -32,6 +43,11 @@ export function SignMessageTab() {
     try {
       if (!message || !privateKey) {
         throw new Error("Please fill in all required fields");
+      }
+
+      const validation = validateStellarSecretKey(privateKey);
+      if (!validation.isValid) {
+        throw new Error(validation.error || "Invalid private key");
       }
 
       // Create keypair from private key (secret key)
@@ -127,14 +143,30 @@ export function SignMessageTab() {
               id="privateKey"
               type="password"
               placeholder="Enter your private key"
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-gray-300 focus:outline-none focus:ring-1 focus:ring-purple-400 transition-colors"
+              className={`w-full p-3 bg-gray-900 rounded text-gray-300 focus:outline-none focus:ring-1 transition-colors ${
+                getValidationClassName(privateKeyValidation?.isValid, privateKey.length > 0)
+              } ${privateKeyValidation?.isValid === false ? 'focus:ring-red-400' : 'focus:ring-purple-400'}`}
               value={privateKey}
               onChange={(e) => setPrivateKey(e.target.value)}
             />
-            <p className="text-amber-400 text-xs flex items-center gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Warning: Never share your private key with anyone
-            </p>
+            <div className="space-y-1">
+              {privateKeyValidation && !privateKeyValidation.isValid && (
+                <p className="text-red-400 text-xs flex items-center gap-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  {privateKeyValidation.error}
+                </p>
+              )}
+              {privateKeyValidation?.isValid && (
+                <p className="text-green-400 text-xs flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Valid Stellar secret key
+                </p>
+              )}
+              <p className="text-amber-400 text-xs flex items-center gap-1.5">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Warning: Never share your private key with anyone
+              </p>
+            </div>
           </div>
 
           {/* Error Display */}

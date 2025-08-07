@@ -20,9 +20,13 @@ export interface ConversionState {
     bids: Array<{ price: string; amount: string }>;
     asks: Array<{ price: string; amount: string }>;
   } | null;
+  currentAssetPair: {
+    fromAssetId: string | null;
+    toAssetId: string | null;
+  };
 }
 
-export function useStellarConversion(sourceSecret?: string) {
+export function useStellarConversion(slippageTolerance: number = 0.05) {
   const [state, setState] = useState<ConversionState>({
     loading: false,
     error: null,
@@ -32,7 +36,11 @@ export function useStellarConversion(sourceSecret?: string) {
       source: null,
       destination: null
     },
-    orderBook: null
+    orderBook: null,
+    currentAssetPair: {
+      fromAssetId: null,
+      toAssetId: null
+    }
   });
 
   const updateState = useCallback((updates: Partial<ConversionState>) => {
@@ -66,7 +74,11 @@ export function useStellarConversion(sourceSecret?: string) {
       return;
     }
 
-    updateState({ loading: true, error: null });
+    updateState({ 
+      loading: true, 
+      error: null,
+      currentAssetPair: { fromAssetId, toAssetId }
+    });
 
     try {
       const estimate = await stellarConversionService.estimateConversion(
@@ -139,6 +151,9 @@ export function useStellarConversion(sourceSecret?: string) {
       return;
     }
 
+    // Update current asset pair when fetching order book
+    updateState({ currentAssetPair: { fromAssetId, toAssetId } });
+
     try {
       const orderBook = await stellarConversionService.getOrderBook(
         sourceAsset,
@@ -154,14 +169,15 @@ export function useStellarConversion(sourceSecret?: string) {
 
   // Execute the conversion
   const executeConversion = useCallback(async (
+    privateKey: string,
     fromAssetId: string,
     toAssetId: string,
     amount: string,
     destinationAddress?: string,
     memo?: string
   ) => {
-    if (!sourceSecret) {
-      updateState({ error: "Wallet not connected" });
+    if (!privateKey) {
+      updateState({ error: "Private key is required for conversion" });
       return;
     }
 
@@ -176,11 +192,11 @@ export function useStellarConversion(sourceSecret?: string) {
     updateState({ loading: true, error: null, result: null });
 
     try {
-      // Use 95% of estimated amount as minimum to account for slippage
-      const destinationMin = (parseFloat(state.estimate.destinationAmount) * 0.95).toFixed(7);
+      // Calculate minimum destination amount based on configurable slippage tolerance
+      const destinationMin = (parseFloat(state.estimate.destinationAmount) * (1 - slippageTolerance)).toFixed(7);
 
       const result = await stellarConversionService.executeConversion(
-        sourceSecret,
+        privateKey,
         sourceAsset,
         destinationAsset,
         amount,
@@ -198,23 +214,21 @@ export function useStellarConversion(sourceSecret?: string) {
         result: { success: false, error: message }
       });
     }
-  }, [sourceSecret, state.estimate, updateState]);
+  }, [slippageTolerance, state.estimate, updateState]);
 
   // Auto-refresh order book data
   useEffect(() => {
     const refreshData = async () => {
-      if (!state.loading && state.estimate) {
-        // Refresh order book data periodically
-        const fromAssetId = Object.keys(STELLAR_ASSETS)[0]; // Default refresh
-        const toAssetId = Object.keys(STELLAR_ASSETS)[1];
-        await fetchOrderBook(fromAssetId, toAssetId);
+      if (!state.loading && state.estimate && state.currentAssetPair.fromAssetId && state.currentAssetPair.toAssetId) {
+        // Refresh order book data periodically using current asset pair
+        await fetchOrderBook(state.currentAssetPair.fromAssetId, state.currentAssetPair.toAssetId);
       }
     };
 
     const interval = setInterval(refreshData, 30000); // Refresh every 30 seconds
     
     return () => clearInterval(interval);
-  }, [state.estimate, state.loading, fetchOrderBook]);
+  }, [state.estimate, state.loading, state.currentAssetPair, fetchOrderBook]);
 
   return {
     ...state,

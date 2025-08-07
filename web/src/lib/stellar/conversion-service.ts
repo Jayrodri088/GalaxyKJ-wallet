@@ -77,7 +77,18 @@ export class StellarConversionService {
     if (stellarAsset.type === 'native') {
       return Asset.native();
     }
-    return new Asset(stellarAsset.code, stellarAsset.issuer!);
+    
+    // Validate that issuer is defined for non-native assets
+    if (!stellarAsset.issuer) {
+      throw new Error(`Asset ${stellarAsset.code} is missing required issuer address. Non-native assets must have a valid issuer.`);
+    }
+    
+    return new Asset(stellarAsset.code, stellarAsset.issuer);
+  }
+
+  // Type guard to check if a balance object has a limit property
+  private hasLimit(balance: any): balance is { limit: string } {
+    return balance && typeof balance === 'object' && 'limit' in balance && typeof balance.limit === 'string';
   }
 
   async checkTrustline(accountPublicKey: string, asset: StellarAsset): Promise<TrustlineInfo> {
@@ -107,9 +118,22 @@ export class StellarConversionService {
         asset,
         exists: !!trustline,
         balance: trustline?.balance || '0',
-        limit: trustline && 'limit' in trustline ? (trustline as unknown as { limit: string }).limit : undefined
+        limit: trustline && this.hasLimit(trustline) ? trustline.limit : undefined
       };
-    } catch {
+    } catch (error: unknown) {
+      // Log the error for better debugging visibility
+      console.error('Error checking trustline for asset', asset.code, ':', error);
+      
+      // Log additional context in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Account public key:', accountPublicKey);
+        console.error('Asset details:', asset);
+        if (error instanceof Error) {
+          console.error('Error message:', error.message);
+          console.error('Error stack:', error.stack);
+        }
+      }
+      
       return {
         asset,
         exists: false,

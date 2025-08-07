@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Keypair } from "@stellar/stellar-sdk";
+import { useState, useRef } from "react";
+import { secureKeyHandler } from "@/lib/secure-key-handler";
 import {
   Lock,
   AlertTriangle,
@@ -15,12 +15,12 @@ import {
 
 export function SignMessageTab() {
   const [message, setMessage] = useState("");
-  const [privateKey, setPrivateKey] = useState("");
   const [signature, setSignature] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signedSuccessfully, setSignedSuccessfully] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const privateKeyInputRef = useRef<HTMLInputElement>(null);
 
   const handleSignMessage = async () => {
     setIsLoading(true);
@@ -30,37 +30,29 @@ export function SignMessageTab() {
     setCopySuccess(false);
 
     try {
-      if (!message || !privateKey) {
+      const privateKeyValue = privateKeyInputRef.current?.value || "";
+      
+      if (!message || !privateKeyValue) {
         throw new Error("Please fill in all required fields");
       }
 
-      // Create keypair from private key (secret key)
-      const keypair = Keypair.fromSecret(privateKey);
+      const result = await secureKeyHandler.secureSignMessage(privateKeyValue, message);
       
-      // Create message buffer from UTF-8 string
-      const messageBuffer = Buffer.from(message, 'utf8');
-
-      // Sign the message
-      const signatureBuffer = keypair.sign(messageBuffer);
-
-      // Convert to base64
-      const base64Signature = signatureBuffer.toString('base64');
-      
-      setSignature(base64Signature);
-      setSignedSuccessfully(true);
-    } catch (error) {
-      let errorMessage = "Unknown error occurred while signing";
-      if (error instanceof Error) {
-        if (error.message.includes("Invalid seed") || error.message.includes("secret")) {
-          errorMessage = "Invalid private key format. Please check your private key.";
-        } else if (error.message.includes("checksum")) {
-          errorMessage = "Invalid private key checksum. Please verify your private key.";
-        } else if (error.message.includes("base32")) {
-          errorMessage = "Private key must be in valid Stellar format (starts with 'S').";
-        } else {
-          errorMessage = "Failed to sign message. Please check your inputs and try again.";
-        }
+      if (result.success) {
+        setSignature(result.signature);
+        setSignedSuccessfully(true);
+      } else {
+        setError(result.error || "Failed to sign message");
       }
+
+      if (privateKeyInputRef.current) {
+        privateKeyInputRef.current.value = "";
+      }
+
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Failed to sign message. Please check your inputs and try again.";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -69,7 +61,9 @@ export function SignMessageTab() {
 
   const handleReset = () => {
     setMessage("");
-    setPrivateKey("");
+    if (privateKeyInputRef.current) {
+      privateKeyInputRef.current.value = "";
+    }
     setSignature("");
     setError(null);
     setSignedSuccessfully(false);
@@ -125,11 +119,10 @@ export function SignMessageTab() {
             </label>
             <input
               id="privateKey"
+              ref={privateKeyInputRef}
               type="password"
               placeholder="Enter your private key"
               className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-gray-300 focus:outline-none focus:ring-1 focus:ring-purple-400 transition-colors"
-              value={privateKey}
-              onChange={(e) => setPrivateKey(e.target.value)}
             />
             <p className="text-amber-400 text-xs flex items-center gap-1.5">
               <AlertTriangle className="h-3.5 w-3.5" />

@@ -1,0 +1,43 @@
+{
+  "language": {
+    "english": "Inglés",
+    "spanish": "Español"
+  },
+  "home": {
+    "hero": {
+      "title": "La próxima generación de billetera inteligente para el ecosistema Stellar",
+      "scrollIndicator": "Desplázate para explorar"
+    },
+    "cta": {
+      "title": "¿Listo para explorar el futuro de las finanzas?",
+      "description": "Únete a miles de usuarios que ya gestionan sus activos digitales con la tecnología de vanguardia de Galaxy Wallet.",
+      "button": "COMENZAR AHORA",
+      "loadingButton": "Cargando..."
+    },
+    "features": {
+      "security": {
+        "title": "Seguridad Avanzada",
+        "description": "Autenticación multi-firma y dinámica para proteger tus activos"
+      },
+      "ai": {
+        "title": "IA Financiera",
+        "description": "Automatización inteligente de tus finanzas con recomendaciones personalizadas"
+      },
+      "exchanges": {
+        "title": "Intercambios Rápidos",
+        "description": "Transacciones instantáneas sin intermediarios en la red Stellar"
+      },
+      "global": {
+        "title": "Acceso Global",
+        "description": "Conéctate con todos los activos disponibles en el ecosistema Stellar"
+      }
+    },
+    "header": {
+      "getStarted": "COMENZAR"
+    }
+  },
+  "login": {
+    "title": "Bienvenido de Vuelta",
+    "subtitle": "Ingresa tu contraseña para desbloquear tu billetera"
+  }
+}

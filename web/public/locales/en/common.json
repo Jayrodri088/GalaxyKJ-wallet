@@ -1,0 +1,43 @@
+{
+  "language": {
+    "english": "English",
+    "spanish": "Spanish"
+  },
+  "home": {
+    "hero": {
+      "title": "The next generation smart wallet for the Stellar ecosystem",
+      "scrollIndicator": "Scroll to explore"
+    },
+    "cta": {
+      "title": "Ready to explore the future of finance?",
+      "description": "Join thousands of users already managing their digital assets with Galaxy Wallet's cutting-edge technology.",
+      "button": "GET STARTED NOW",
+      "loadingButton": "Loading..."
+    },
+    "features": {
+      "security": {
+        "title": "Advanced Security",
+        "description": "Multi-signature and dynamic authentication to protect your assets"
+      },
+      "ai": {
+        "title": "Financial AI",
+        "description": "Intelligent automation of your finances with personalized recommendations"
+      },
+      "exchanges": {
+        "title": "Fast Exchanges",
+        "description": "Instant transactions without intermediaries on the Stellar network"
+      },
+      "global": {
+        "title": "Global Access",
+        "description": "Connect with all assets available in the Stellar ecosystem"
+      }
+    },
+    "header": {
+      "getStarted": "GET STARTED"
+    }
+  },
+  "login": {
+    "title": "Welcome Back",
+    "subtitle": "Enter your password to unlock your wallet"
+  }
+}

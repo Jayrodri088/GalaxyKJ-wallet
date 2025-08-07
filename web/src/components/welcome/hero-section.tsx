@@ -1,14 +1,16 @@
-"use client"
+"use client";
 
-import { motion, useTransform, type MotionValue } from "framer-motion"
-import Image from "next/image"
+import { motion, useTransform, type MotionValue } from "framer-motion";
+import Image from "next/image";
+import { useClientTranslation } from "@/contexts/language-provider";
 
 interface HeroSectionProps {
-  scrollYProgress: MotionValue<number>
+  scrollYProgress: MotionValue<number>;
 }
 
 export function HeroSection({ scrollYProgress }: HeroSectionProps) {
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, -100])
+  const { t } = useClientTranslation();
+  const y1 = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-start pt-16 md:pt-28 overflow-hidden">
@@ -68,7 +70,7 @@ export function HeroSection({ scrollYProgress }: HeroSectionProps) {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}
           >
-            The next generation smart wallet for the Stellar ecosystem
+            {t("home.hero.title")}
           </motion.p>
 
           {/* Scroll Indicator */}
@@ -79,7 +81,9 @@ export function HeroSection({ scrollYProgress }: HeroSectionProps) {
             transition={{ delay: 1.6, duration: 1 }}
           >
             <div className="flex flex-col items-center">
-              <span className="text-sm text-blue-200/70 mb-2">Scroll to explore</span>
+              <span className="text-sm text-blue-200/70 mb-2">
+                {t("home.hero.scrollIndicator")}
+              </span>
               <div className="w-6 h-10 border-2 border-blue-200/50 rounded-full flex justify-center p-1">
                 <motion.div
                   className="w-1.5 h-1.5 bg-blue-200 rounded-full"
@@ -96,5 +100,5 @@ export function HeroSection({ scrollYProgress }: HeroSectionProps) {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }

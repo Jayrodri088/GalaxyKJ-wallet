@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/globals.css";
 import { StarBackground } from "@/components/effects/star-background";
+import { LanguageProvider } from "@/contexts/language-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,8 +33,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased relative bg-[#0A0B1E] text-white`}
         suppressHydrationWarning={true}
       >
-        <StarBackground />
-        <main className="relative z-10">{children}</main>
+        <LanguageProvider>
+          <StarBackground />
+          <main className="relative z-10">{children}</main>
+        </LanguageProvider>
       </body>
     </html>
   );

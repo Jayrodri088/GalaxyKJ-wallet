@@ -1,12 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowRight, FileText, MoveRight, Repeat } from "lucide-react"
+import { ArrowRight, FileText, MoveRight, Repeat, AlertCircle, CheckCircle, Loader2, Shield, Eye, EyeOff } from "lucide-react"
 import ExchangeRateChart from "@/components/ cryptocurrency-converter/exchange-rate-chart"
 import MarketOverview from "@/components/ cryptocurrency-converter/market-overview"
 import ConversionHistory from "@/components/ cryptocurrency-converter/conversion-history"
 import ConversionTips from "@/components/ cryptocurrency-converter/conversion-tips"
 import NetworkFeeCalculator from "@/components/ cryptocurrency-converter/network-fee-calculator"
+import { useStellarConversion } from "@/hooks/use-stellar-conversion"
+import { useSecureKey } from "@/contexts/secure-key-context"
 
 const cryptoData = [
   { 
@@ -18,6 +20,16 @@ const cryptoData = [
     color: "bg-blue-500",
     gradient: "from-blue-500 to-indigo-600", 
     letter: "X" 
+  },
+  { 
+    id: "usdc", 
+    name: "USD Coin", 
+    symbol: "USDC", 
+    price: 1.0, 
+    change: 0, 
+    color: "bg-blue-500",
+    gradient: "from-blue-500 to-cyan-400", 
+    letter: "U" 
   },
   { 
     id: "btc", 
@@ -39,60 +51,173 @@ const cryptoData = [
     gradient: "from-blue-600 to-blue-400", 
     letter: "E" 
   },
-  { 
-    id: "usdc", 
-    name: "USD Coin", 
-    symbol: "USDC", 
-    price: 1.0, 
-    change: 0, 
-    color: "bg-blue-500",
-    gradient: "from-blue-500 to-cyan-400", 
-    letter: "U" 
-  },
-  { 
-    id: "sol", 
-    name: "Solana", 
-    symbol: "SOL", 
-    price: 142.35, 
-    change: 2.2, 
-    color: "bg-purple-500",
-    gradient: "from-purple-500 to-fuchsia-500", 
-    letter: "S" 
-  },
 ]
 
 export default function CryptoConverter() {
   const [fromCrypto, setFromCrypto] = useState("xlm")
-  const [toCrypto, setToCrypto] = useState("btc")
+  const [toCrypto, setToCrypto] = useState("usdc")
   const [amount, setAmount] = useState("100")
-  const [convertedAmount, setConvertedAmount] = useState("0.00057147")
   const [activeTab, setActiveTab] = useState("crypto-to-crypto")
   const [showFromDropdown, setShowFromDropdown] = useState(false)
   const [showToDropdown, setShowToDropdown] = useState(false)
+  const [destinationAddress, setDestinationAddress] = useState("")
+  const [memo, setMemo] = useState("")
+  const [tempPrivateKey, setTempPrivateKey] = useState("") // Temporary input field only
+  const [showSecurityWarnings, setShowSecurityWarnings] = useState(false)
+  const [showPrivateKey, setShowPrivateKey] = useState(false)
+  const [privateKeyError, setPrivateKeyError] = useState<string | null>(null)
+  const [conversionError, setConversionError] = useState<string | null>(null)
+  
+  // Use secure key context instead of storing in component state
+  const {
+    setPrivateKey,
+    hasPrivateKey,
+    clearPrivateKey,
+    getSecurityWarnings,
+    withPrivateKey
+  } = useSecureKey()
+  
+  // Use the Stellar conversion hook with secure key access
+  // Default slippage tolerance is 5% (0.05) - can be customized by passing a parameter
+  const {
+    loading,
+    error,
+    estimate,
+    result,
+    trustlines,
+    // orderBook,
+    getEstimate,
+    checkTrustlines,
+    fetchOrderBook,
+    executeConversion,
+    clearError,
+    clearResult
+  } = useStellarConversion() // or useStellarConversion(0.03) for 3% slippage tolerance
 
   const getTokenById = (id: string) => {
     return cryptoData.find((crypto) => crypto.id === id) || cryptoData[0]
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-    useEffect(() => {
-    const from = getTokenById(fromCrypto)
-    const to = getTokenById(toCrypto)
-
-    if (from && to && amount) {
-      const conversion = (Number.parseFloat(amount) * from.price) / to.price
-      setConvertedAmount(conversion.toFixed(8))
+  // Fetch live exchange rates when inputs change
+  useEffect(() => {
+    if (amount && parseFloat(amount) > 0) {
+      getEstimate(fromCrypto, toCrypto, amount)
+      fetchOrderBook(fromCrypto, toCrypto)
     }
-  }, [fromCrypto, toCrypto, amount])
+  }, [fromCrypto, toCrypto, amount, getEstimate, fetchOrderBook])
+  
+  // Handle secure private key submission
+  const handlePrivateKeySubmit = () => {
+    if (!tempPrivateKey) return
+    
+    // Clear any previous error
+    setPrivateKeyError(null)
+    
+    try {
+      setPrivateKey(tempPrivateKey)
+      setTempPrivateKey("") // Clear temporary input immediately
+      setShowSecurityWarnings(false)
+    } catch (error) {
+      setPrivateKeyError(error instanceof Error ? error.message : 'Invalid private key')
+    }
+  }
+  
+  // Check trustlines when user connects wallet
+  useEffect(() => {
+    const checkTrustlinesAsync = async () => {
+      if (hasPrivateKey()) {
+        withPrivateKey(async (privateKey) => {
+          try {
+            const { Keypair } = await import('@stellar/stellar-sdk')
+            const keypair = Keypair.fromSecret(privateKey)
+            checkTrustlines(keypair.publicKey(), fromCrypto, toCrypto)
+          } catch (error) {
+            // Handle specific error types and log unexpected errors
+            if (error instanceof Error) {
+              // Check for known Stellar SDK secret key validation errors
+              const isInvalidSecretError = 
+                error.message.includes('Invalid seed') ||
+                error.message.includes('secret') ||
+                error.message.includes('checksum') ||
+                error.message.includes('base32') ||
+                error.message.includes('strkey')
+              
+              if (isInvalidSecretError) {
+                // Expected error for invalid private key format - silently ignore
+                if (process.env.NODE_ENV === 'development') {
+                  console.debug('Trustline check skipped: Invalid private key format')
+                }
+              } else {
+                // Unexpected error - log it for debugging
+                if (process.env.NODE_ENV === 'development') {
+                  console.warn('Unexpected error during trustline check:', error.message)
+                } else {
+                  // In production, log minimal info to avoid exposing sensitive details
+                  console.warn('Trustline check failed due to unexpected error')
+                }
+              }
+            } else {
+              // Non-Error exceptions (rare but possible)
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('Trustline check failed with non-Error exception:', error)
+              } else {
+                console.warn('Trustline check failed with unexpected exception')
+              }
+            }
+          }
+        })
+      }
+    }
+    checkTrustlinesAsync()
+  }, [hasPrivateKey, withPrivateKey, fromCrypto, toCrypto, checkTrustlines])
 
   const handleFromCryptoChange = (id: string) => {
     setFromCrypto(id)
     setShowFromDropdown(false)
+    clearError()
+    clearResult()
+    setConversionError(null) // Clear conversion errors when assets change
   }
 
   const handleToCryptoChange = (id: string) => {
     setToCrypto(id)
     setShowToDropdown(false)
+    clearError()
+    clearResult()
+    setConversionError(null) // Clear conversion errors when assets change
+  }
+  
+  const handleConvertTokens = async () => {
+    // Clear any previous conversion error
+    setConversionError(null)
+    
+    if (!hasPrivateKey()) {
+      setConversionError("Please enter your Stellar secret key first")
+      return
+    }
+    
+    if (!amount || parseFloat(amount) <= 0) {
+      setConversionError("Please enter a valid amount")
+      return
+    }
+    
+    // Execute conversion with secure key access
+    await withPrivateKey(async (privateKey) => {
+      await executeConversion(
+        privateKey,
+        fromCrypto,
+        toCrypto,
+        amount,
+        destinationAddress || undefined,
+        memo || undefined
+      )
+    })
+  }
+  
+  const swapAssets = () => {
+    const tempFrom = fromCrypto
+    setFromCrypto(toCrypto)
+    setToCrypto(tempFrom)
   }
 
   useEffect(() => {
@@ -323,41 +448,277 @@ export default function CryptoConverter() {
                 <div>
                   <p className="mb-2 text-white">Amount</p>
                   <input
-                    type="text"
+                    type="number"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => {
+                      setAmount(e.target.value)
+                      // Clear conversion error when amount changes
+                      if (conversionError) setConversionError(null)
+                    }}
+                    placeholder="Enter amount to convert"
                     className="w-full bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-white h-12 text-base"
                   />
+                  {trustlines.source && (
+                    <div className="mt-1 text-xs text-gray-400">
+                      Balance: {trustlines.source.balance} {fromCryptoData.symbol}
+                    </div>
+                  )}
                 </div>
 
                 <div>
-                  <p className="mb-2 text-white">Converted Amount</p>
-                  <input
-                    type="text"
-                    value={convertedAmount}
-                    readOnly
-                    className="w-full bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-white h-12 text-base"
-                  />
+                  <p className="mb-2 text-white">Estimated Amount</p>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={loading ? "Calculating..." : estimate?.destinationAmount || "0.00"}
+                      readOnly
+                      className="w-full bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-white h-12 text-base"
+                    />
+                    {loading && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
+                      </div>
+                    )}
+                  </div>
+                  {estimate && (
+                    <div className="mt-1 text-xs text-gray-400">
+                      Fee: {estimate.fee} XLM (~{estimate.estimatedTime}s)
+                    </div>
+                  )}
                 </div>
 
-                <div className="absolute left-1/2 top-[55%] transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-12 h-12 bg-gray-800/50 rounded-full z-10 border border-gray-700 shadow-lg mt-1">
+                {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+                <button
+                  onClick={swapAssets}
+                  className="absolute left-1/2 top-[55%] transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-12 h-12 bg-gray-800/50 hover:bg-gray-700/50 rounded-full z-10 border border-gray-700 shadow-lg mt-1 transition-colors"
+                >
                   <div className="text-purple-500">
                     <ArrowRight className="h-5 w-5" />
                   </div>
+                </button>
+              </div>
+
+              {/* Wallet Connection Section */}
+              <div className="bg-gray-800/30 rounded-lg p-4 space-y-4">
+                {/* Security Warning */}
+                <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-3 flex items-start gap-3">
+                  <Shield className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-amber-400 text-sm font-medium mb-1">Security Warning</p>
+                    <p className="text-amber-300 text-xs">
+                      Only enter your private key in secure, trusted environments. Private keys cannot be completely wiped from browser memory.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowSecurityWarnings(!showSecurityWarnings)}
+                      className="text-amber-400 text-xs underline mt-1 hover:text-amber-300"
+                    >
+                      {showSecurityWarnings ? 'Hide' : 'Show'} detailed security info
+                    </button>
+                  </div>
+                </div>
+
+                {/* Detailed Security Warnings */}
+                {showSecurityWarnings && (
+                  <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+                    <h4 className="text-red-400 text-sm font-medium mb-2">Security Limitations & Recommendations:</h4>
+                    <ul className="space-y-1">
+                      {getSecurityWarnings().map((warning, index) => (
+                        <li key={index} className="text-red-300 text-xs flex items-start gap-2">
+                          <span className="flex-shrink-0 mt-1">•</span>
+                          <span>{warning}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm text-gray-400">Stellar Secret Key</label>
+                      {hasPrivateKey() ? (
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="text-xs text-green-400">Connected</span>
+                          <button
+                            type="button"
+                            onClick={clearPrivateKey}
+                            className="text-xs text-red-400 hover:text-red-300 underline"
+                          >
+                            Disconnect
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                          <span className="text-xs text-red-400">Not Connected</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {!hasPrivateKey() && (
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <input
+                            type={showPrivateKey ? "text" : "password"}
+                            value={tempPrivateKey}
+                            onChange={(e) => {
+                              setTempPrivateKey(e.target.value)
+                              // Clear error when user starts typing
+                              if (privateKeyError) setPrivateKeyError(null)
+                            }}
+                            placeholder="S... (for live conversion)"
+                            className={`w-full bg-gray-700/50 border rounded-lg p-2 pr-10 text-white text-sm ${
+                              privateKeyError ? 'border-red-500' : 'border-gray-600'
+                            }`}
+                            onKeyPress={(e) => e.key === 'Enter' && handlePrivateKeySubmit()}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPrivateKey(!showPrivateKey)}
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                          >
+                            {showPrivateKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        
+                        {/* Private Key Error Display */}
+                        {privateKeyError && (
+                          <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-2 flex items-start gap-2">
+                            <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                            <p className="text-red-400 text-xs">{privateKeyError}</p>
+                          </div>
+                        )}
+                        
+                        <button
+                          type="button"
+                          onClick={handlePrivateKeySubmit}
+                          disabled={!tempPrivateKey}
+                          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg py-2 text-white text-sm transition-colors"
+                        >
+                          Connect Wallet
+                        </button>
+                      </div>
+                    )}
+                    
+                    {hasPrivateKey() && (
+                      <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-2 text-center">
+                        <p className="text-green-400 text-sm">✓ Wallet connected securely</p>
+                        <p className="text-green-300 text-xs">Session auto-expires in 5 minutes</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Destination (optional)</label>
+                    <input
+                      type="text"
+                      value={destinationAddress}
+                      onChange={(e) => setDestinationAddress(e.target.value)}
+                      placeholder="G... (leave empty to send to self)"
+                      className="w-full bg-gray-700/50 border border-gray-600 rounded-lg p-2 text-white text-sm"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Memo (optional)</label>
+                  <input
+                    type="text"
+                    value={memo}
+                    onChange={(e) => setMemo(e.target.value)}
+                    placeholder="Transaction memo"
+                    className="w-full bg-gray-700/50 border border-gray-600 rounded-lg p-2 text-white text-sm"
+                  />
                 </div>
               </div>
+              
+              {/* Trustline Status */}
+              {hasPrivateKey() && (
+                <div className="bg-gray-800/30 rounded-lg p-4">
+                  <h4 className="text-white font-medium mb-2">Asset Status</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      {trustlines.source?.exists ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                      )}
+                      <span className="text-sm text-gray-300">
+                        {fromCryptoData.symbol}: {trustlines.source?.exists ? 'Ready' : 'Trustline needed'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {trustlines.destination?.exists ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                      )}
+                      <span className="text-sm text-gray-300">
+                        {toCryptoData.symbol}: {trustlines.destination?.exists ? 'Ready' : 'Trustline needed'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Error Display */}
+              {error && (
+                <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-red-400 text-sm">{error}</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Conversion Error Display */}
+              {conversionError && (
+                <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-red-400 text-sm">{conversionError}</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Success Display */}
+              {result?.success && (
+                <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 flex items-start gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-green-400 text-sm mb-1">Conversion successful!</p>
+                    {result.hash && (
+                      <p className="text-xs text-gray-400">
+                        Transaction: {result.hash.substring(0, 20)}...
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="bg-gray-800/30 rounded-lg p-4 flex justify-between items-center">
                 <div className="text-sm">
                   <p className="text-gray-400">Conversion Rate</p>
                   <p className="font-medium text-white text-lg">
-                    1 {fromCryptoData.symbol} = {(fromCryptoData.price / toCryptoData.price).toFixed(8)}{" "}
+                    1 {fromCryptoData.symbol} = {estimate?.rate ? parseFloat(estimate.rate).toFixed(8) : '...'}{" "}
                     {toCryptoData.symbol}
                   </p>
+                  {estimate?.path && estimate.path.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Path: {estimate.path.map(p => p.code).join(' → ')}
+                    </p>
+                  )}
                 </div>
                 {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-                <button className="bg-[#7e22ce] hover:bg-[#6b21a8] rounded-lg px-6 py-3 text-white">
-                  Save Conversion
+                <button 
+                  onClick={handleConvertTokens}
+                  disabled={loading || !estimate || !hasPrivateKey()}
+                  className="bg-[#7e22ce] hover:bg-[#6b21a8] disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg px-6 py-3 text-white flex items-center gap-2 transition-colors"
+                >
+                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Convert Tokens
                 </button>
               </div>
             </div>

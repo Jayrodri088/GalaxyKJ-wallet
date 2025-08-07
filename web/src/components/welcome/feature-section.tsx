@@ -1,31 +1,34 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { Shield, Zap, RefreshCw, Globe } from "lucide-react"
+import { motion } from "framer-motion";
+import { Shield, Zap, RefreshCw, Globe } from "lucide-react";
+import { useClientTranslation } from "@/contexts/language-provider";
 
 export function FeatureSection() {
+  const { t } = useClientTranslation();
+
   const benefits = [
     {
       icon: <Shield className="h-8 w-8 text-blue-400" />,
-      title: "Advanced Security",
-      description: "Multi-signature and dynamic authentication to protect your assets",
+      title: t("home.features.security.title"),
+      description: t("home.features.security.description"),
     },
     {
       icon: <Zap className="h-8 w-8 text-yellow-400" />,
-      title: "Financial AI",
-      description: "Intelligent automation of your finances with personalized recommendations",
+      title: t("home.features.ai.title"),
+      description: t("home.features.ai.description"),
     },
     {
       icon: <RefreshCw className="h-8 w-8 text-purple-400" />,
-      title: "Fast Exchanges",
-      description: "Instant transactions without intermediaries on the Stellar network",
+      title: t("home.features.exchanges.title"),
+      description: t("home.features.exchanges.description"),
     },
     {
       icon: <Globe className="h-8 w-8 text-green-400" />,
-      title: "Global Access",
-      description: "Connect with all assets available in the Stellar ecosystem",
+      title: t("home.features.global.title"),
+      description: t("home.features.global.description"),
     },
-  ]
+  ];
 
   return (
     <section className="relative py-20 md:py-32">
@@ -41,8 +44,8 @@ export function FeatureSection() {
             Stellar Ecosystem Integration
           </h2>
           <p className="text-xl text-blue-100/70 max-w-3xl mx-auto">
-            Experience seamless connectivity with the entire Stellar network, enabling fast and secure transactions
-            across the galaxy.
+            Experience seamless connectivity with the entire Stellar network,
+            enabling fast and secure transactions across the galaxy.
           </p>
         </motion.div>
 
@@ -61,7 +64,9 @@ export function FeatureSection() {
                 <div className="mb-6 p-4 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-full">
                   {benefit.icon}
                 </div>
-                <h3 className="text-2xl font-semibold text-white mb-3">{benefit.title}</h3>
+                <h3 className="text-2xl font-semibold text-white mb-3">
+                  {benefit.title}
+                </h3>
                 <p className="text-blue-100/70">{benefit.description}</p>
               </div>
             </motion.div>
@@ -69,6 +74,5 @@ export function FeatureSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }
-

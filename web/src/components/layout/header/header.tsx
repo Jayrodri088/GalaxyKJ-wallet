@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { useRouter, usePathname } from "next/navigation"
-import { useState, useRef } from "react"
+import Image from "next/image";
+import { useRouter, usePathname } from "next/navigation";
+import { useState, useRef } from "react";
 import {
   HelpCircle,
   Search,
@@ -12,29 +12,29 @@ import {
   LayoutGrid,
   Grid3X3,
   LogOut,
-} from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { MobileMenu } from "./mobile-menu"
-import { Button } from "@/components/ui/button"
-import { useWalletStore } from "@/store/wallet-store"
-import { useTransactionSearch } from "@/hooks/use-transaction-search"
-import { SearchResults } from "@/components/ui/search-results"
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { MobileMenu } from "./mobile-menu";
+import { Button } from "@/components/ui/button";
+import { useWalletStore } from "@/store/wallet-store";
+import { useTransactionSearch } from "@/hooks/use-transaction-search";
+import { SearchResults } from "@/components/ui/search-results";
 
 interface HeaderProps {
-  onCreateWallet: () => void
-  onLogin: () => void
+  onCreateWallet: () => void;
+  onLogin: () => void;
 }
 
 export function Header({ onCreateWallet, onLogin }: HeaderProps) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const publicKey = useWalletStore((state) => state.publicKey)
-  const setPublicKey = useWalletStore((state) => state.setPublicKey)
-  
+  const router = useRouter();
+  const pathname = usePathname();
+  const publicKey = useWalletStore((state) => state.publicKey);
+  const setPublicKey = useWalletStore((state) => state.setPublicKey);
+
   // Search functionality
-  const [searchFocused, setSearchFocused] = useState(false)
-  const [showSearchResults, setShowSearchResults] = useState(false)
-  const searchRef = useRef<HTMLDivElement>(null)
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const {
     searchQuery,
     setSearchQuery,
@@ -43,97 +43,100 @@ export function Header({ onCreateWallet, onLogin }: HeaderProps) {
     isSearching,
     hasSearched,
     hasResults,
-  } = useTransactionSearch()
+  } = useTransactionSearch();
 
   // Menu options with corrected routes and availability
   const menuOptions = [
-    { 
-      label: "Converter", 
-      icon: <ArrowRightLeft className="h-4 w-4" />, 
+    {
+      label: "Converter",
+      icon: <ArrowRightLeft className="h-4 w-4" />,
       href: "/cryptocurrency-converter",
-      available: true 
+      available: true,
     },
-    { 
-      label: "Learn", 
-      icon: <BookOpen className="h-4 w-4" />, 
+    {
+      label: "Learn",
+      icon: <BookOpen className="h-4 w-4" />,
       href: "/education-center",
-      available: true 
+      available: true,
     },
-    { 
-      label: "Portfolio", 
-      icon: <LayoutGrid className="h-4 w-4" />, 
+    {
+      label: "Portfolio",
+      icon: <LayoutGrid className="h-4 w-4" />,
       href: "/portfolio-analytics",
-      available: true 
+      available: true,
     },
-    { 
-      label: "Widgets", 
-      icon: <Grid3X3 className="h-4 w-4" />, 
+    {
+      label: "Widgets",
+      icon: <Grid3X3 className="h-4 w-4" />,
       href: "/widget-configuration",
-      available: true 
+      available: true,
     },
-    { 
-      label: "Support", 
-      icon: <HelpCircle className="h-4 w-4" />, 
+    {
+      label: "Support",
+      icon: <HelpCircle className="h-4 w-4" />,
       href: "/support",
-      available: true 
+      available: true,
     },
-    { 
-      label: "Settings", 
-      icon: <Settings className="h-4 w-4" />, 
+    {
+      label: "Settings",
+      icon: <Settings className="h-4 w-4" />,
       href: "/settings",
-      available: true 
+      available: true,
     },
-  ]
+  ];
 
   const handleLogout = () => {
-    setPublicKey("")
-    router.push("/")
-  }
+    setPublicKey("");
+    router.push("/");
+  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchQuery(value)
-    setShowSearchResults(value.trim().length > 0)
-  }
+    const value = e.target.value;
+    setSearchQuery(value);
+    setShowSearchResults(value.trim().length > 0);
+  };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
+    if (e.key === "Enter" && searchQuery.trim()) {
       // Navigate to transactions page with search
-      router.push(`/transactions?search=${encodeURIComponent(searchQuery)}`)
-      setShowSearchResults(false)
+      router.push(`/transactions?search=${encodeURIComponent(searchQuery)}`);
+      setShowSearchResults(false);
     }
-  }
+  };
 
   const handleSearchFocus = () => {
-    setSearchFocused(true)
+    setSearchFocused(true);
     if (searchQuery.trim()) {
-      setShowSearchResults(true)
+      setShowSearchResults(true);
     }
-  }
+  };
 
   const handleSearchBlur = () => {
-    setSearchFocused(false)
+    setSearchFocused(false);
     // Delay hiding results to allow clicking on them
     setTimeout(() => {
       if (!searchRef.current?.contains(document.activeElement)) {
-        setShowSearchResults(false)
+        setShowSearchResults(false);
       }
-    }, 150)
-  }
+    }, 150);
+  };
 
   const closeSearchResults = () => {
-    setShowSearchResults(false)
-    clearSearch()
-  }
+    setShowSearchResults(false);
+    clearSearch();
+  };
 
   const isActiveRoute = (href: string) => {
-    return pathname === href
-  }
+    return pathname === href;
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-md border-b border-gray-800 py-3 ">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push("/")}>
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => router.push("/")}
+        >
           <Image
             src="/images/galaxy-smart-wallet-logo.png"
             alt="Galaxy Smart Wallet Logo"
@@ -186,7 +189,7 @@ export function Header({ onCreateWallet, onLogin }: HeaderProps) {
                 searchFocused ? "ring-1 ring-purple-500/50" : ""
               }`}
             />
-            
+
             <SearchResults
               transactions={transactions}
               isSearching={isSearching}
@@ -222,5 +225,5 @@ export function Header({ onCreateWallet, onLogin }: HeaderProps) {
         </div>
       </div>
     </header>
-  )
+  );
 }

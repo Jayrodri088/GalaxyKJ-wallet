@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Keypair } from "@stellar/stellar-sdk";
-import { validateStellarSecretKey, getValidationClassName } from "@/lib/stellar/validation";
+import { secureKeyHandler } from "@/lib/secure-key-handler";
+import {
+  validateStellarSecretKey,
+  getValidationClassName,
+} from "@/lib/stellar/validation";
 import {
   Lock,
   AlertTriangle,
@@ -22,7 +26,12 @@ export function SignMessageTab() {
   const [error, setError] = useState<string | null>(null);
   const [signedSuccessfully, setSignedSuccessfully] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
-  const [privateKeyValidation, setPrivateKeyValidation] = useState<{ isValid: boolean; error?: string } | null>(null);
+  const [privateKeyValidation, setPrivateKeyValidation] = useState<{
+    isValid: boolean;
+    error?: string;
+  } | null>(null);
+
+  const privateKeyInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (privateKey.trim()) {
@@ -41,42 +50,38 @@ export function SignMessageTab() {
     setCopySuccess(false);
 
     try {
-      if (!message || !privateKey) {
+      const privateKeyValue = privateKeyInputRef.current?.value || "";
+
+      if (!message || !privateKeyValue) {
         throw new Error("Please fill in all required fields");
       }
 
-      const validation = validateStellarSecretKey(privateKey);
+      const validation = validateStellarSecretKey(privateKeyValue);
       if (!validation.isValid) {
         throw new Error(validation.error || "Invalid private key");
       }
 
-      // Create keypair from private key (secret key)
-      const keypair = Keypair.fromSecret(privateKey);
-      
-      // Create message buffer from UTF-8 string
-      const messageBuffer = Buffer.from(message, 'utf8');
+      const result = await secureKeyHandler.secureSignMessage(
+        privateKeyValue,
+        message
+      );
 
-      // Sign the message
-      const signatureBuffer = keypair.sign(messageBuffer);
-
-      // Convert to base64
-      const base64Signature = signatureBuffer.toString('base64');
-      
-      setSignature(base64Signature);
-      setSignedSuccessfully(true);
-    } catch (error) {
-      let errorMessage = "Unknown error occurred while signing";
-      if (error instanceof Error) {
-        if (error.message.includes("Invalid seed") || error.message.includes("secret")) {
-          errorMessage = "Invalid private key format. Please check your private key.";
-        } else if (error.message.includes("checksum")) {
-          errorMessage = "Invalid private key checksum. Please verify your private key.";
-        } else if (error.message.includes("base32")) {
-          errorMessage = "Private key must be in valid Stellar format (starts with 'S').";
-        } else {
-          errorMessage = "Failed to sign message. Please check your inputs and try again.";
-        }
+      if (result.success) {
+        setSignature(result.signature);
+        setSignedSuccessfully(true);
+      } else {
+        setError(result.error || "Failed to sign message");
       }
+
+      if (privateKeyInputRef.current) {
+        privateKeyInputRef.current.value = "";
+      }
+      setPrivateKey("");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to sign message. Please check your inputs and try again.";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -85,6 +90,9 @@ export function SignMessageTab() {
 
   const handleReset = () => {
     setMessage("");
+    if (privateKeyInputRef.current) {
+      privateKeyInputRef.current.value = "";
+    }
     setPrivateKey("");
     setSignature("");
     setError(null);
@@ -97,11 +105,12 @@ export function SignMessageTab() {
       try {
         await navigator.clipboard.writeText(signature);
         setCopySuccess(true);
-        // Reset success message after 2 seconds
         setTimeout(() => setCopySuccess(false), 2000);
       } catch (err) {
-        console.error('Failed to copy signature:', err);
-        setError('Failed to copy signature to clipboard. Please try selecting and copying manually.');
+        console.error("Failed to copy signature:", err);
+        setError(
+          "Failed to copy signature to clipboard. Please try selecting and copying manually."
+        );
       }
     }
   };
@@ -141,11 +150,19 @@ export function SignMessageTab() {
             </label>
             <input
               id="privateKey"
+              ref={privateKeyInputRef}
               type="password"
               placeholder="Enter your private key"
               className={`w-full p-3 bg-gray-900 rounded text-gray-300 focus:outline-none focus:ring-1 transition-colors ${
-                getValidationClassName(privateKeyValidation?.isValid, privateKey.length > 0)
-              } ${privateKeyValidation?.isValid === false ? 'focus:ring-red-400' : 'focus:ring-purple-400'}`}
+                getValidationClassName(
+                  privateKeyValidation?.isValid,
+                  privateKey.length > 0
+                )
+              } ${
+                privateKeyValidation?.isValid === false
+                  ? "focus:ring-red-400"
+                  : "focus:ring-purple-400"
+              }`}
               value={privateKey}
               onChange={(e) => setPrivateKey(e.target.value)}
             />
@@ -169,7 +186,6 @@ export function SignMessageTab() {
             </div>
           </div>
 
-          {/* Error Display */}
           {error && (
             <div className="bg-red-900/30 border border-red-700 text-red-200 p-3 rounded flex items-center text-sm">
               <AlertTriangle size={16} className="mr-2" />
@@ -177,7 +193,6 @@ export function SignMessageTab() {
             </div>
           )}
 
-          {/* Success Display */}
           {signedSuccessfully && signature && (
             <div className="bg-green-900/30 border border-green-700 text-green-200 p-3 rounded flex items-center text-sm">
               <CheckCircle2 size={16} className="mr-2" />
@@ -245,8 +260,8 @@ export function SignMessageTab() {
                 <button
                   onClick={handleCopySignature}
                   className={`absolute right-2 top-2 p-2 rounded-md transition-colors ${
-                    copySuccess 
-                      ? "bg-green-700 hover:bg-green-600" 
+                    copySuccess
+                      ? "bg-green-700 hover:bg-green-600"
                       : "bg-gray-800 hover:bg-gray-700"
                   }`}
                   title={copySuccess ? "Copied!" : "Copy signature"}
@@ -259,7 +274,8 @@ export function SignMessageTab() {
                 </button>
               </div>
               <p className="text-xs text-gray-500">
-                This signature can be used to verify the message was signed by the owner of the private key.
+                This signature can be used to verify the message was signed by
+                the owner of the private key.
               </p>
             </div>
           )}

@@ -179,7 +179,7 @@ describe('Stellar Error Handler', () => {
     });
 
     test('should return undefined for non-existent error code', () => {
-      const errorInfo = stellarErrorHandler.getErrorByCode('NON_EXISTENT_CODE' as any);
+      const errorInfo = stellarErrorHandler.getErrorByCode('NON_EXISTENT_CODE' as StellarErrorCode);
 
       expect(errorInfo).toBeUndefined();
     });

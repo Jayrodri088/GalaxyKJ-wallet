@@ -1,14 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Keypair } from "@stellar/stellar-sdk";
 import { secureKeyHandler } from "@/lib/secure-key-handler";
 import {
   validateStellarSecretKey,
   getValidationClassName,
 } from "@/lib/stellar/validation";
 import {
-  processStellarError,
   getStellarErrorMessage,
   getStellarErrorSuggestions,
 } from "@/lib/stellar/error-handler";

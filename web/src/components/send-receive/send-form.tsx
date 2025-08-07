@@ -6,6 +6,7 @@ import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { validateStellarAddress } from "@/lib/stellar/validation";
 import {
   Select,
   SelectContent,
@@ -48,6 +49,7 @@ export function SendForm() {
   const [modalTitle, setModalTitle] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [show, setShow] = useState(false);
+  const [addressValidation, setAddressValidation] = useState<{ isValid: boolean; error?: string; type?: string } | null>(null);
 
   const { sendXLM, loading, txResult, estimations } =
     useStellarPayment(SOURCE_SECRET);
@@ -149,8 +151,20 @@ export function SendForm() {
     }
   };
 
+  useEffect(() => {
+    if (address.trim()) {
+      const validation = validateStellarAddress(address);
+      setAddressValidation(validation);
+    } else {
+      setAddressValidation(null);
+    }
+  }, [address]);
+
   const isValidForm =
-    address.length > 0 && amount.length > 0 && Number(amount) > 0;
+    address.length > 0 && 
+    amount.length > 0 && 
+    Number(amount) > 0 && 
+    addressValidation?.isValid === true;
 
   return (
     <CardContent className="p-6">
@@ -167,7 +181,13 @@ export function SendForm() {
                 placeholder="G..."
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="bg-[#0A0B1E]/50 border-[#1F2037] focus:border-[#7C3AED] text-white pr-10"
+                className={`bg-[#0A0B1E]/50 text-white pr-10 ${
+                  addressValidation?.isValid === false
+                    ? "border-red-500 focus:border-red-400"
+                    : addressValidation?.isValid === true
+                    ? "border-green-500 focus:border-green-400"
+                    : "border-[#1F2037] focus:border-[#7C3AED]"
+                }`}
               />
               {address && (
                 <button
@@ -195,6 +215,18 @@ export function SendForm() {
               <QrCode className="h-4 w-4" />
             </Button>
           </div>
+          {addressValidation && !addressValidation.isValid && (
+            <div className="flex items-center gap-1.5 text-red-400 text-xs mt-1">
+              <AlertCircle className="h-3.5 w-3.5" />
+              {addressValidation.error}
+            </div>
+          )}
+          {addressValidation?.isValid && (
+            <div className="flex items-center gap-1.5 text-green-400 text-xs mt-1">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Valid Stellar {addressValidation.type === 'muxed_account' ? 'muxed account' : 'address'}
+            </div>
+          )}
         </div>
 
         {/* Token Selection */}

@@ -87,7 +87,7 @@ export class StellarConversionService {
   }
 
   // Type guard to check if a balance object has a limit property
-  private hasLimit(balance: any): balance is { limit: string } {
+  private hasLimit(balance: unknown): balance is { limit: string } {
     return balance && typeof balance === 'object' && 'limit' in balance && typeof balance.limit === 'string';
   }
 

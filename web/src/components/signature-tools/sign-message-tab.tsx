@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Keypair } from "@stellar/stellar-sdk";
 import { secureKeyHandler } from "@/lib/secure-key-handler";
 import {
   validateStellarSecretKey,
   getValidationClassName,
 } from "@/lib/stellar/validation";
+import {
+  getStellarErrorMessage,
+  getStellarErrorSuggestions,
+} from "@/lib/stellar/error-handler";
 import {
   Lock,
   AlertTriangle,
@@ -24,6 +27,7 @@ export function SignMessageTab() {
   const [signature, setSignature] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorSuggestions, setErrorSuggestions] = useState<string[]>([]);
   const [signedSuccessfully, setSignedSuccessfully] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [privateKeyValidation, setPrivateKeyValidation] = useState<{
@@ -45,6 +49,7 @@ export function SignMessageTab() {
   const handleSignMessage = async () => {
     setIsLoading(true);
     setError(null);
+    setErrorSuggestions([]);
     setSignature("");
     setSignedSuccessfully(false);
     setCopySuccess(false);
@@ -78,11 +83,26 @@ export function SignMessageTab() {
       }
       setPrivateKey("");
     } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to sign message. Please check your inputs and try again.";
-      setError(errorMessage);
+      if (error instanceof Error) {
+        const stellarErrorMessage = getStellarErrorMessage(error, {
+          operation: 'sign_message',
+          additionalInfo: { messageLength: message.length }
+        });
+        const suggestions = getStellarErrorSuggestions(error, {
+          operation: 'sign_message',
+          additionalInfo: { messageLength: message.length }
+        });
+        
+        setError(stellarErrorMessage);
+        setErrorSuggestions(suggestions);
+      } else {
+        setError("Failed to sign message. Please check your inputs and try again.");
+        setErrorSuggestions([
+          'Verify your private key is correct',
+          'Check that the message is not empty',
+          'Try refreshing the page and trying again'
+        ]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -96,6 +116,7 @@ export function SignMessageTab() {
     setPrivateKey("");
     setSignature("");
     setError(null);
+    setErrorSuggestions([]);
     setSignedSuccessfully(false);
     setCopySuccess(false);
   };
@@ -108,9 +129,16 @@ export function SignMessageTab() {
         setTimeout(() => setCopySuccess(false), 2000);
       } catch (err) {
         console.error("Failed to copy signature:", err);
-        setError(
-          "Failed to copy signature to clipboard. Please try selecting and copying manually."
-        );
+        const error = err instanceof Error ? err : new Error("Clipboard operation failed");
+        const stellarErrorMessage = getStellarErrorMessage(error, {
+          operation: 'copy_signature'
+        });
+        const suggestions = getStellarErrorSuggestions(error, {
+          operation: 'copy_signature'
+        });
+        
+        setError(stellarErrorMessage);
+        setErrorSuggestions(suggestions);
       }
     }
   };
@@ -187,9 +215,26 @@ export function SignMessageTab() {
           </div>
 
           {error && (
-            <div className="bg-red-900/30 border border-red-700 text-red-200 p-3 rounded flex items-center text-sm">
-              <AlertTriangle size={16} className="mr-2" />
-              {error}
+            <div className="bg-red-900/30 border border-red-700 text-red-200 p-4 rounded space-y-3">
+              <div className="flex items-start text-sm">
+                <AlertTriangle size={16} className="mr-2 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-medium mb-2">{error}</p>
+                  {errorSuggestions.length > 0 && (
+                    <div>
+                      <p className="text-red-300 text-xs mb-2 font-medium">Suggested solutions:</p>
+                      <ul className="text-red-300 text-xs space-y-1">
+                        {errorSuggestions.map((suggestion, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="mr-2">•</span>
+                            <span>{suggestion}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 

@@ -323,19 +323,21 @@ class StellarErrorHandler {
       return this.errorMap.get(STELLAR_ERROR_CODES.SIGNATURE_VERIFICATION_FAILED)!;
     }
     
-    if (errorMessage.includes('network') || errorMessage.includes('connection')) {
-      if (errorMessage.includes('timeout')) {
-        return this.errorMap.get(STELLAR_ERROR_CODES.CONNECTION_TIMEOUT)!;
-      }
-      return this.errorMap.get(STELLAR_ERROR_CODES.NETWORK_ERROR)!;
-    }
-    
+    // Check account-specific errors before network errors (since they might contain "network" keyword)
     if (errorMessage.includes('account not found') || errorMessage.includes('account does not exist')) {
       return this.errorMap.get(STELLAR_ERROR_CODES.ACCOUNT_NOT_FOUND)!;
     }
     
     if (errorMessage.includes('insufficient balance') || errorMessage.includes('underfunded')) {
       return this.errorMap.get(STELLAR_ERROR_CODES.INSUFFICIENT_BALANCE)!;
+    }
+    
+    // Network errors (check after account errors to avoid conflicts)
+    if (errorMessage.includes('network') || errorMessage.includes('connection')) {
+      if (errorMessage.includes('timeout')) {
+        return this.errorMap.get(STELLAR_ERROR_CODES.CONNECTION_TIMEOUT)!;
+      }
+      return this.errorMap.get(STELLAR_ERROR_CODES.NETWORK_ERROR)!;
     }
     
     if (errorMessage.includes('transaction failed') || errorMessage.includes('tx failed')) {

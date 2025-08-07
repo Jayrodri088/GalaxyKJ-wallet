@@ -27,7 +27,7 @@ export interface StellarErrorContext {
   amount?: string;
   networkUrl?: string;
   timestamp?: number;
-  additionalInfo?: Record<string, any>;
+  additionalInfo?: Record<string, unknown>;
 }
 
 export interface ProcessedStellarError {

@@ -51,10 +51,9 @@ export function useWalletBalances() {
           } else if (balance.asset_type === "credit_alphanum4" || balance.asset_type === "credit_alphanum12") {
             // Otros tokens
             const assetCode = balance.asset_code;
-            const assetIssuer = balance.asset_issuer;
             
             // Mapear tokens conocidos
-            let tokenInfo = getTokenInfo(assetCode, assetIssuer);
+            const tokenInfo = getTokenInfo(assetCode);
             
             tokenBalances.push({
               symbol: assetCode,
@@ -64,7 +63,6 @@ export function useWalletBalances() {
               change: tokenInfo.change,
               icon: tokenInfo.icon,
               assetCode,
-              assetIssuer,
             });
           }
         });
@@ -86,7 +84,7 @@ export function useWalletBalances() {
 }
 
 // Función auxiliar para obtener información de tokens conocidos
-function getTokenInfo(assetCode: string, assetIssuer: string) {
+function getTokenInfo(assetCode: string) {
   // Mapeo de tokens conocidos en Stellar testnet/mainnet
   const knownTokens: Record<string, { name: string; price: number; change: number; icon: string }> = {
     USDC: {

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import { CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -26,7 +27,6 @@ export function ReceiveForm() {
   const [copied, setCopied] = useState(false);
   const [selectedToken, setSelectedToken] = useState("XLM");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
-  const qrRef = useRef<HTMLDivElement>(null);
 
   const publicKey = useWalletStore((state) => state.publicKey);
   const { balances, loading, error } = useWalletBalances();
@@ -137,7 +137,7 @@ export function ReceiveForm() {
         <div className="flex flex-col items-center">
           <div className="w-64 h-64 bg-white p-4 rounded-lg mb-4 shadow-lg flex items-center justify-center">
             {qrCodeDataUrl ? (
-              <img src={qrCodeDataUrl} alt="QR Code" className="w-full h-full object-contain" />
+              <Image src={qrCodeDataUrl} alt="QR Code" width={224} height={224} className="object-contain" />
             ) : (
               <div className="flex items-center justify-center w-full h-full">
                 <Loader2 className="h-8 w-8 animate-spin text-gray-400" />

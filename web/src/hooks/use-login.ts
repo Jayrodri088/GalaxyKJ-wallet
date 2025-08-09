@@ -6,7 +6,6 @@ import { useWalletStore } from "@/store/wallet-store"
 
 const DB_NAME = "galaxy-wallet-db"
 const STORE_NAME = "encrypted-wallet"
-const STORE_KEY = "wallet"
 
 export function useLogin(onSuccess: (privateKey: string) => void) {
   const [password, setPassword] = useState("")

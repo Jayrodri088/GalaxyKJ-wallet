@@ -1,8 +1,7 @@
 import { openDB } from "idb"
 
-const DB_NAME = "galaxy-wallet-db"
+const DB_NAME = "wallet-db"
 const STORE_NAME = "encrypted-wallet"
-const STORE_KEY = "wallet"
 
 /**
  * Encrypts a private key using password-based encryption with enhanced security measures

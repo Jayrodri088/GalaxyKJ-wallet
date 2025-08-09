@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { useWalletRecovery } from "@/hooks/use-wallet-recovery"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { StarBackground } from "@/components/effects/star-background"
 
 interface WalletRecoveryScreenProps {
   onClose?: () => void
@@ -49,8 +50,9 @@ export function WalletRecoveryScreen({ onClose, onRecoverySuccess }: WalletRecov
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="relative w-full max-w-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-md p-8 shadow-lg rounded-xl text-white">
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+      <StarBackground />
+      <div className="relative w-full max-w-2xl bg-gray-900/70 border border-gray-700/50 backdrop-blur-xl p-8 shadow-2xl rounded-xl text-white z-10">
         {onClose && (
           <button
             onClick={onClose}

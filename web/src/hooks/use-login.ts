@@ -20,9 +20,21 @@ export function useLogin(onSuccess: (privateKey: string) => void) {
   useEffect(() => {
     const checkWallet = async () => {
       try {
-        const db = await openDB(DB_NAME, 1)
-        const value = await db.get(STORE_NAME, STORE_KEY)
-        setHasWallet(!!value)
+        const db = await openDB(DB_NAME, 1, {
+          upgrade(db) {
+            // Create the object store if it doesn't exist
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              const store = db.createObjectStore(STORE_NAME, {
+                keyPath: "id",
+                autoIncrement: true
+              })
+              // Create any indexes if needed
+              store.createIndex("wallet", "wallet", { unique: false })
+            }
+          },
+        })
+        const wallets = await db.getAll(STORE_NAME)
+        setHasWallet(wallets && wallets.length > 0)
       } catch {
         setHasWallet(false)
       }
@@ -41,13 +53,30 @@ export function useLogin(onSuccess: (privateKey: string) => void) {
     setError("")
 
     try {
-      const db = await openDB(DB_NAME, 1)
-      const encrypted = await db.get(STORE_NAME, STORE_KEY)
-
-      if (!encrypted) {
+      const db = await openDB(DB_NAME, 1, {
+        upgrade(db) {
+          // Create the object store if it doesn't exist
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            const store = db.createObjectStore(STORE_NAME, {
+              keyPath: "id",
+              autoIncrement: true
+            })
+            // Create any indexes if needed
+            store.createIndex("wallet", "wallet", { unique: false })
+          }
+        },
+      })
+      
+      const wallets = await db.getAll(STORE_NAME)
+      
+      if (!wallets || wallets.length === 0) {
         setError("Wallet not found.")
         return
       }
+
+      // Get the first wallet (assuming single wallet for now)
+      const walletData = wallets[0]
+      const encrypted = walletData.wallet
 
       const decryptedPrivateKey = await decryptPrivateKey(encrypted, password)
       const keypair = Keypair.fromSecret(decryptedPrivateKey)

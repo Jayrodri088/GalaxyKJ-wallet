@@ -1,4 +1,3 @@
-// components/send-form.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,7 +5,6 @@ import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { validateStellarAddress } from "@/lib/stellar/validation";
 import {
   Select,
   SelectContent,
@@ -14,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { validateStellarAddress } from "@/lib/stellar/validation";
 import {
   Send,
   Clipboard,
@@ -24,7 +23,6 @@ import {
   XCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
 import { useStellarPayment } from "@/hooks/use-stellar-payments";
 import {
   Dialog,
@@ -32,6 +30,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+// Loading state + UI
+import { useLoadingState } from "../../hooks/use-loading-state";
+import {
+  LoadingButtonContent,
+  LoadingProgress,
+  TimeoutNotice,
+} from "../ui/loading-states";
 
 const SOURCE_SECRET =
   "SC65LNVENQQ3YRMFDGKE7KLFRBNDPZIH6S3APFIKUNOYFKDY3RPVL6M7";
@@ -49,10 +55,21 @@ export function SendForm() {
   const [modalTitle, setModalTitle] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [show, setShow] = useState(false);
-  const [addressValidation, setAddressValidation] = useState<{ isValid: boolean; error?: string; type?: string } | null>(null);
+  const [addressValidation, setAddressValidation] = useState<{
+    isValid: boolean;
+    error?: string;
+    type?: string;
+  } | null>(null);
 
-  const { sendXLM, loading, txResult, estimations } =
-    useStellarPayment(SOURCE_SECRET);
+  const {
+    sendXLM,
+    loading: hookLoading,
+    txResult,
+    estimations,
+  } = useStellarPayment(SOURCE_SECRET);
+
+  // New loading state for UX feedback + timeout/retry
+  const txLoading = useLoadingState(20000); // 20s timeout for network op
 
   // Fetch estimates on mount
   useEffect(() => {
@@ -66,21 +83,43 @@ export function SendForm() {
     fetchEstimations();
   }, [estimations]);
 
-  // Show result modal when txResult changes
+  // Show result modal and toasts when txResult changes
   useEffect(() => {
     if (txResult) {
       if (txResult.success) {
         setModalTitle("Transaction Successful");
-
         setIsSuccess(true);
+        txLoading.succeed("Sent");
+        toast({
+          title: "Success!",
+          description: `Transaction sent. Hash: ${txResult.hash}`,
+        });
+        // clear on success
+        setAddress("");
+        setAmount("");
+        setPercentageSelected(null);
       } else if (txResult.error) {
         setModalTitle("Transaction Failed");
-
         setIsSuccess(false);
+        txLoading.fail(txResult.error, "Failed");
+        toast({
+          title: "Transaction Failed",
+          description: txResult.error,
+        });
       }
       setShow(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txResult]);
+
+  useEffect(() => {
+    if (address.trim()) {
+      const validation = validateStellarAddress(address);
+      setAddressValidation(validation);
+    } else {
+      setAddressValidation(null);
+    }
+  }, [address]);
 
   const tokens = [
     { symbol: "XLM", name: "Stellar Lumens", balance: 1250.75 },
@@ -88,7 +127,6 @@ export function SendForm() {
     { symbol: "BTC", name: "Bitcoin", balance: 0.0045 },
     { symbol: "ETH", name: "Ethereum", balance: 0.12 },
   ];
-
   const selectedTokenData =
     tokens.find((t) => t.symbol === selectedToken) || tokens[0];
 
@@ -133,38 +171,47 @@ export function SendForm() {
       )}...${address.substring(address.length - 4)}`,
     });
 
-    await sendXLM({ destination: address, amount });
+    const runner = async () => {
+      txLoading.update({ label: "Building transaction...", progress: 20 });
+      const result = await sendXLM({ destination: address, amount });
+      txLoading.update({
+        label: "Broadcasting to Stellar network...",
+        progress: 65,
+      });
+      return result;
+    };
 
-    if (txResult?.success) {
-      toast({
-        title: "Success!",
-        description: `Transaction sent. Hash: ${txResult.hash}`,
+    try {
+      await txLoading.withTimeout(runner, {
+        labels: {
+          starting: "Preparing...",
+          pending: "Submitting...",
+          success: "Sent",
+          timeout: "Network is slow",
+          error: "Failed",
+        },
+        onSuccess: async () => {
+          txLoading.update({ progress: Math.max(85, txLoading.progress) });
+        },
+        onTimeout: () => {
+          // Inline timeout notice will appear; you could also open a modal here if desired
+        },
+        mapError: (e) =>
+          e instanceof Error ? e.message : "Transaction failed",
       });
-      setAddress("");
-      setAmount("");
-      setPercentageSelected(null);
-    } else if (txResult?.error) {
-      toast({
-        title: "Transaction Failed",
-        description: txResult.error,
-      });
+    } catch {
+      // Errors surfaced by txLoading and txResult effect
     }
   };
 
-  useEffect(() => {
-    if (address.trim()) {
-      const validation = validateStellarAddress(address);
-      setAddressValidation(validation);
-    } else {
-      setAddressValidation(null);
-    }
-  }, [address]);
-
   const isValidForm =
-    address.length > 0 && 
-    amount.length > 0 && 
-    Number(amount) > 0 && 
+    address.length > 0 &&
+    amount.length > 0 &&
+    Number(amount) > 0 &&
     addressValidation?.isValid === true;
+
+  // Effective pending merges your hook's loading with our UX loading state
+  const isPending = hookLoading || txLoading.phase === "pending";
 
   return (
     <CardContent className="p-6">
@@ -193,8 +240,9 @@ export function SendForm() {
                 <button
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
                   onClick={() => setAddress("")}
+                  aria-label="Clear address"
                 >
-                  ×
+                  {"\u00D7"}
                 </button>
               )}
             </div>
@@ -224,7 +272,10 @@ export function SendForm() {
           {addressValidation?.isValid && (
             <div className="flex items-center gap-1.5 text-green-400 text-xs mt-1">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Valid Stellar {addressValidation.type === 'muxed_account' ? 'muxed account' : 'address'}
+              Valid Stellar{" "}
+              {addressValidation.type === "muxed_account"
+                ? "muxed account"
+                : "address"}
             </div>
           )}
         </div>
@@ -242,7 +293,12 @@ export function SendForm() {
               <SelectValue placeholder="Select token" />
             </SelectTrigger>
             <SelectContent className="bg-[#12132A] border-[#1F2037] text-white">
-              {tokens.map((token) => (
+              {[
+                { symbol: "XLM", name: "Stellar Lumens", balance: 1250.75 },
+                { symbol: "USDC", name: "USD Coin", balance: 350.0 },
+                { symbol: "BTC", name: "Bitcoin", balance: 0.0045 },
+                { symbol: "ETH", name: "Ethereum", balance: 0.12 },
+              ].map((token) => (
                 <SelectItem
                   key={token.symbol}
                   value={token.symbol}
@@ -274,8 +330,26 @@ export function SendForm() {
             </Label>
             <span className="text-sm text-gray-400">
               Available:{" "}
-              {selectedTokenData.balance.toFixed(
-                selectedTokenData.balance < 1 ? 4 : 2
+              {(
+                (
+                  [
+                    { symbol: "XLM", name: "Stellar Lumens", balance: 1250.75 },
+                    { symbol: "USDC", name: "USD Coin", balance: 350.0 },
+                    { symbol: "BTC", name: "Bitcoin", balance: 0.0045 },
+                    { symbol: "ETH", name: "Ethereum", balance: 0.12 },
+                  ].find((t) => t.symbol === selectedToken) || { balance: 0 }
+                ).balance as number
+              ).toFixed(
+                (
+                  [
+                    { symbol: "XLM", name: "Stellar Lumens", balance: 1250.75 },
+                    { symbol: "USDC", name: "USD Coin", balance: 350.0 },
+                    { symbol: "BTC", name: "Bitcoin", balance: 0.0045 },
+                    { symbol: "ETH", name: "Ethereum", balance: 0.12 },
+                  ].find((t) => t.symbol === selectedToken) || { balance: 0 }
+                ).balance < 1
+                  ? 4
+                  : 2
               )}{" "}
               {selectedToken}
             </span>
@@ -296,7 +370,6 @@ export function SendForm() {
               {selectedToken}
             </div>
           </div>
-
           <div className="flex gap-2">
             {[25, 50, 75, 100].map((percentage) => (
               <Button
@@ -325,7 +398,6 @@ export function SendForm() {
             </div>
             <span>{estimatedFee} XLM</span>
           </div>
-
           <div className="flex justify-between items-center text-gray-400">
             <div className="flex items-center gap-1">
               <Info className="h-4 w-4" />
@@ -333,7 +405,6 @@ export function SendForm() {
             </div>
             <span>~{estimatedTime}</span>
           </div>
-
           <div className="flex justify-between items-center pt-2 border-t border-[#1F2037]">
             <span className="text-gray-300">Total Amount</span>
             <div className="text-white">
@@ -348,27 +419,50 @@ export function SendForm() {
           </div>
         </div>
 
+        {/* Send Button with improved content */}
         <Button
           className={`w-full h-11 text-sm font-medium flex items-center justify-center gap-2 ${
-            isValidForm && !loading
+            isValidForm && !isPending
               ? "bg-[#7C3AED] hover:bg-[#6D31D9] text-white"
               : "bg-[#1F2037] text-gray-400 cursor-not-allowed"
           }`}
-          disabled={!isValidForm || loading}
+          disabled={!isValidForm || isPending}
           onClick={handleSend}
+          aria-busy={isPending}
         >
-          {loading ? (
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded-full border-2 border-t-transparent border-white animate-spin" />
-              <span>Sending...</span>
-            </div>
-          ) : (
-            <>
-              <Send className="h-4 w-4" />
-              Send {selectedToken}
-            </>
-          )}
+          <LoadingButtonContent
+            phase={
+              txLoading.phase === "idle" && hookLoading
+                ? "pending"
+                : txLoading.phase
+            }
+            idleIcon={<Send className="h-4 w-4" />}
+            idleLabel={`Send ${selectedToken}`}
+            pendingLabel={txLoading.label ?? "Submitting..."}
+            successLabel="Sent"
+            errorLabel="Try Again"
+            progress={txLoading.progress}
+          />
         </Button>
+
+        {/* Inline progress + timeout banner */}
+        {txLoading.phase === "pending" && (
+          <LoadingProgress
+            className="mt-2"
+            value={Math.round(txLoading.progress)}
+            label={txLoading.label}
+          />
+        )}
+        {txLoading.phase === "timeout" && (
+          <div className="mt-2">
+            <TimeoutNotice
+              title="Network is taking longer than usual"
+              description="You can retry now, or keep this window open. The transaction may still be processed."
+              onRetry={() => txLoading.retry()}
+              onCancel={() => txLoading.reset()}
+            />
+          </div>
+        )}
 
         {/* Warning */}
         <div className="flex items-start gap-2 text-xs text-yellow-500/90 bg-yellow-500/5 rounded-md p-3">
@@ -380,6 +474,7 @@ export function SendForm() {
         </div>
       </div>
 
+      {/* Result dialog stays the same, uses your reused Radix UI components */}
       <Dialog open={show} onOpenChange={setShow}>
         <DialogContent className="sm:max-w-md bg-[#12132A] border-[#1F2037]">
           <DialogHeader>

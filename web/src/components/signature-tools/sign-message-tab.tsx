@@ -1,31 +1,36 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { secureKeyHandler } from "@/lib/secure-key-handler";
-import {
-  validateStellarSecretKey,
-  getValidationClassName,
-} from "@/lib/stellar/validation";
 import {
   getStellarErrorMessage,
   getStellarErrorSuggestions,
 } from "@/lib/stellar/error-handler";
 import {
-  Lock,
+  getValidationClassName,
+  validateStellarSecretKey,
+} from "@/lib/stellar/validation";
+import {
   AlertTriangle,
+  CheckCircle,
+  CheckCircle2,
+  Copy,
+  Lock,
   RefreshCw,
   ShieldCheck,
-  CheckCircle,
   FileCheck,
-  Copy,
-  CheckCircle2,
 } from "lucide-react";
+import { useLoadingState } from "../../hooks/use-loading-state";
+import {
+  LoadingButtonContent,
+  LoadingProgress,
+  TimeoutNotice,
+} from "../ui/loading-states";
 
 export function SignMessageTab() {
   const [message, setMessage] = useState("");
   const [privateKey, setPrivateKey] = useState("");
   const [signature, setSignature] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorSuggestions, setErrorSuggestions] = useState<string[]>([]);
   const [signedSuccessfully, setSignedSuccessfully] = useState(false);
@@ -37,6 +42,9 @@ export function SignMessageTab() {
 
   const privateKeyInputRef = useRef<HTMLInputElement>(null);
 
+  // Loading state machine with timeout + retry
+  const loading = useLoadingState(12000);
+
   useEffect(() => {
     if (privateKey.trim()) {
       const validation = validateStellarSecretKey(privateKey);
@@ -47,64 +55,72 @@ export function SignMessageTab() {
   }, [privateKey]);
 
   const handleSignMessage = async () => {
-    setIsLoading(true);
     setError(null);
     setErrorSuggestions([]);
     setSignature("");
     setSignedSuccessfully(false);
     setCopySuccess(false);
 
-    try {
+    const runner = async () => {
+      loading.update({ label: "Validating inputs...", progress: 10 });
       const privateKeyValue = privateKeyInputRef.current?.value || "";
-
       if (!message || !privateKeyValue) {
         throw new Error("Please fill in all required fields");
       }
-
       const validation = validateStellarSecretKey(privateKeyValue);
       if (!validation.isValid) {
         throw new Error(validation.error || "Invalid private key");
       }
+
+      loading.update({ label: "Preparing to sign...", progress: 25 });
+      loading.update({ label: "Awaiting signature...", progress: 45 });
 
       const result = await secureKeyHandler.secureSignMessage(
         privateKeyValue,
         message
       );
 
+      loading.update({ label: "Finalizing...", progress: 80 });
+
       if (result.success) {
         setSignature(result.signature);
         setSignedSuccessfully(true);
+        if (privateKeyInputRef.current) privateKeyInputRef.current.value = "";
+        setPrivateKey("");
       } else {
-        setError(result.error || "Failed to sign message");
+        throw new Error(result.error || "Failed to sign message");
       }
+    };
 
-      if (privateKeyInputRef.current) {
-        privateKeyInputRef.current.value = "";
-      }
-      setPrivateKey("");
-    } catch (error) {
-      if (error instanceof Error) {
-        const stellarErrorMessage = getStellarErrorMessage(error, {
-          operation: 'sign_message',
-          additionalInfo: { messageLength: message.length }
-        });
-        const suggestions = getStellarErrorSuggestions(error, {
-          operation: 'sign_message',
-          additionalInfo: { messageLength: message.length }
-        });
-        
-        setError(stellarErrorMessage);
-        setErrorSuggestions(suggestions);
-      } else {
-        setError("Failed to sign message. Please check your inputs and try again.");
-        setErrorSuggestions([
-          'Verify your private key is correct',
-          'Check that the message is not empty',
-          'Try refreshing the page and trying again'
-        ]);
-      }
-    } finally {
-      setIsLoading(false);
+    try {
+      await loading.withTimeout(runner, {
+        labels: {
+          starting: "Starting sign...",
+          pending: "Awaiting signature...",
+          success: "Message signed",
+          timeout: "Waiting for signature",
+          error: "Signing failed",
+        },
+        mapError: (e) =>
+          e instanceof Error
+            ? e.message
+            : "Failed to sign message. Please try again.",
+        onSuccess: async () => loading.update({ progress: 100 }),
+      });
+    } catch (err) {
+      const stellarErrorMessage = getStellarErrorMessage(
+        err instanceof Error ? err : new Error("Failed to sign"),
+        {
+          operation: "sign_message",
+          additionalInfo: { messageLength: message.length },
+        }
+      );
+      const suggestions = getStellarErrorSuggestions(err as Error, {
+        operation: "sign_message",
+        additionalInfo: { messageLength: message.length },
+      });
+      setError(stellarErrorMessage);
+      setErrorSuggestions(suggestions);
     }
   };
 
@@ -119,39 +135,42 @@ export function SignMessageTab() {
     setErrorSuggestions([]);
     setSignedSuccessfully(false);
     setCopySuccess(false);
+    loading.reset();
   };
 
   const handleCopySignature = async () => {
-    if (signature) {
-      try {
-        await navigator.clipboard.writeText(signature);
-        setCopySuccess(true);
-        setTimeout(() => setCopySuccess(false), 2000);
-      } catch (err) {
-        console.error("Failed to copy signature:", err);
-        const error = err instanceof Error ? err : new Error("Clipboard operation failed");
-        const stellarErrorMessage = getStellarErrorMessage(error, {
-          operation: 'copy_signature'
-        });
-        const suggestions = getStellarErrorSuggestions(error, {
-          operation: 'copy_signature'
-        });
-        
-        setError(stellarErrorMessage);
-        setErrorSuggestions(suggestions);
-      }
+    if (!signature) return;
+    try {
+      await navigator.clipboard.writeText(signature);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy signature:", err);
+      const error =
+        err instanceof Error ? err : new Error("Clipboard operation failed");
+      const stellarErrorMessage = getStellarErrorMessage(error, {
+        operation: "copy_signature",
+      });
+      const suggestions = getStellarErrorSuggestions(error, {
+        operation: "copy_signature",
+      });
+      setError(stellarErrorMessage);
+      setErrorSuggestions(suggestions);
     }
   };
 
+  const isPending = loading.phase === "pending";
+
   return (
     <div className="space-y-6">
-      <div className="bg-gray-900/50 backdrop-blur-md border border-gray-800 rounded-lg shadow-lg p-6">
+      <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-6 shadow-lg backdrop-blur-md">
         <div>
-          <h2 className="text-xl font-bold mb-1">Sign a Message</h2>
-          <p className="text-sm text-gray-400 mb-6">
+          <h2 className="mb-1 text-xl font-bold">Sign a Message</h2>
+          <p className="mb-6 text-sm text-gray-400">
             Create a cryptographic signature using your private key
           </p>
         </div>
+
         <div className="space-y-4">
           <div className="space-y-2">
             <label
@@ -163,7 +182,7 @@ export function SignMessageTab() {
             <textarea
               id="message"
               placeholder="Enter the message you want to sign"
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-gray-300 h-24 focus:outline-none focus:ring-1 focus:ring-purple-400 transition-colors"
+              className="h-24 w-full rounded border border-gray-700 bg-gray-900 p-3 text-gray-300 transition-colors focus:outline-none focus:ring-1 focus:ring-purple-400"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
@@ -181,12 +200,10 @@ export function SignMessageTab() {
               ref={privateKeyInputRef}
               type="password"
               placeholder="Enter your private key"
-              className={`w-full p-3 bg-gray-900 rounded text-gray-300 focus:outline-none focus:ring-1 transition-colors ${
-                getValidationClassName(
-                  privateKeyValidation?.isValid,
-                  privateKey.length > 0
-                )
-              } ${
+              className={`w-full rounded bg-gray-900 p-3 text-gray-300 transition-colors focus:outline-none focus:ring-1 ${getValidationClassName(
+                privateKeyValidation?.isValid,
+                privateKey.length > 0
+              )} ${
                 privateKeyValidation?.isValid === false
                   ? "focus:ring-red-400"
                   : "focus:ring-purple-400"
@@ -196,18 +213,18 @@ export function SignMessageTab() {
             />
             <div className="space-y-1">
               {privateKeyValidation && !privateKeyValidation.isValid && (
-                <p className="text-red-400 text-xs flex items-center gap-1.5">
+                <p className="flex items-center gap-1.5 text-xs text-red-400">
                   <AlertTriangle className="h-3.5 w-3.5" />
                   {privateKeyValidation.error}
                 </p>
               )}
               {privateKeyValidation?.isValid && (
-                <p className="text-green-400 text-xs flex items-center gap-1.5">
+                <p className="flex items-center gap-1.5 text-xs text-green-400">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   Valid Stellar secret key
                 </p>
               )}
-              <p className="text-amber-400 text-xs flex items-center gap-1.5">
+              <p className="flex items-center gap-1.5 text-xs text-amber-400">
                 <AlertTriangle className="h-3.5 w-3.5" />
                 Warning: Never share your private key with anyone
               </p>
@@ -215,15 +232,20 @@ export function SignMessageTab() {
           </div>
 
           {error && (
-            <div className="bg-red-900/30 border border-red-700 text-red-200 p-4 rounded space-y-3">
+            <div className="space-y-3 rounded border border-red-700 bg-red-900/30 p-4 text-red-200">
               <div className="flex items-start text-sm">
-                <AlertTriangle size={16} className="mr-2 mt-0.5 flex-shrink-0" />
+                <AlertTriangle
+                  size={16}
+                  className="mr-2 mt-0.5 flex-shrink-0"
+                />
                 <div className="flex-1">
-                  <p className="font-medium mb-2">{error}</p>
+                  <p className="mb-2 font-medium">{error}</p>
                   {errorSuggestions.length > 0 && (
                     <div>
-                      <p className="text-red-300 text-xs mb-2 font-medium">Suggested solutions:</p>
-                      <ul className="text-red-300 text-xs space-y-1">
+                      <p className="mb-2 text-xs font-medium text-red-300">
+                        Suggested solutions:
+                      </p>
+                      <ul className="space-y-1 text-xs text-red-300">
                         {errorSuggestions.map((suggestion, index) => (
                           <li key={index} className="flex items-start">
                             <span className="mr-2">•</span>
@@ -239,57 +261,59 @@ export function SignMessageTab() {
           )}
 
           {signedSuccessfully && signature && (
-            <div className="bg-green-900/30 border border-green-700 text-green-200 p-3 rounded flex items-center text-sm">
-              <CheckCircle2 size={16} className="mr-2" />
-              Message signed successfully! Your signature is ready to use.
+            <div
+              className="flex items-center rounded bg-green-900/30 p-3 text-sm text-green-200 ring-1 ring-inset ring-green-700 transition-all"
+              role="status"
+              aria-live="polite"
+            >
+              <CheckCircle2 size={16} className="mr-2 animate-pop" />
+              {"Message signed successfully! Your signature is ready to use."}
             </div>
           )}
 
           <div className="flex gap-3 pt-2">
             <button
               onClick={handleSignMessage}
-              disabled={isLoading}
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded flex items-center justify-center transition-colors disabled:opacity-50"
+              disabled={isPending}
+              className="flex-1 justify-center rounded bg-purple-600 px-4 py-3 text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+              aria-busy={isPending}
             >
-              {isLoading ? (
-                <span className="flex items-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Signing...
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  <Lock className="mr-2" size={16} />
-                  Sign Message
-                </span>
-              )}
+              <LoadingButtonContent
+                phase={loading.phase}
+                idleIcon={<Lock size={16} className="mr-1.5" />}
+                idleLabel="Sign Message"
+                pendingLabel={loading.label ?? "Signing..."}
+                successLabel="Signed"
+                errorLabel="Try Again"
+                progress={loading.progress}
+              />
             </button>
             <button
               onClick={handleReset}
-              className="bg-transparent border border-gray-700 hover:bg-gray-800 text-gray-300 py-3 px-4 rounded flex items-center justify-center transition-colors"
+              className="flex items-center justify-center rounded border border-gray-700 px-4 py-3 text-gray-300 transition-colors hover:bg-gray-800"
             >
               <RefreshCw size={16} />
               <span className="ml-2">Reset</span>
             </button>
           </div>
+
+          {loading.phase === "pending" && (
+            <LoadingProgress
+              className="mt-2"
+              value={Math.round(loading.progress)}
+              label={loading.label}
+            />
+          )}
+          {loading.phase === "timeout" && (
+            <div className="mt-3">
+              <TimeoutNotice
+                title="Waiting for signature..."
+                description="Confirm the signature in your wallet or device. If you've already confirmed, you can retry."
+                onRetry={() => loading.retry()}
+                onCancel={() => loading.reset()}
+              />
+            </div>
+          )}
 
           {signature && (
             <div className="mt-4 space-y-2">
@@ -300,11 +324,11 @@ export function SignMessageTab() {
                 <textarea
                   value={signature}
                   readOnly
-                  className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-gray-300 h-24 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-purple-400 transition-colors"
+                  className="h-24 w-full rounded border border-gray-700 bg-gray-900 p-3 font-mono text-sm text-gray-300 transition-colors focus:outline-none focus:ring-1 focus:ring-purple-400"
                 />
                 <button
                   onClick={handleCopySignature}
-                  className={`absolute right-2 top-2 p-2 rounded-md transition-colors ${
+                  className={`absolute right-2 top-2 rounded-md p-2 transition-colors ${
                     copySuccess
                       ? "bg-green-700 hover:bg-green-600"
                       : "bg-gray-800 hover:bg-gray-700"
@@ -327,10 +351,10 @@ export function SignMessageTab() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-800 rounded-lg shadow-lg p-4">
-          <div className="flex items-center mb-2">
-            <ShieldCheck size={18} className="text-purple-400 mr-2" />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="rounded-lg border border-gray-800 bg-gray-800/30 p-4 shadow-lg backdrop-blur-sm">
+          <div className="mb-2 flex items-center">
+            <ShieldCheck size={18} className="mr-2 text-purple-400" />
             <h3 className="font-medium text-gray-200">Security First</h3>
           </div>
           <p className="text-sm text-gray-400">
@@ -338,10 +362,9 @@ export function SignMessageTab() {
             Your private keys never leave your device.
           </p>
         </div>
-
-        <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-800 rounded-lg shadow-lg p-4">
-          <div className="flex items-center mb-2">
-            <CheckCircle size={18} className="text-purple-400 mr-2" />
+        <div className="rounded-lg border border-gray-800 bg-gray-800/30 p-4 shadow-lg backdrop-blur-sm">
+          <div className="mb-2 flex items-center">
+            <CheckCircle size={18} className="mr-2 text-purple-400" />
             <h3 className="font-medium text-gray-200">Blockchain Compatible</h3>
           </div>
           <p className="text-sm text-gray-400">
@@ -349,10 +372,9 @@ export function SignMessageTab() {
             Ethereum, Bitcoin, and Stellar.
           </p>
         </div>
-
-        <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-800 rounded-lg shadow-lg p-4">
-          <div className="flex items-center mb-2">
-            <FileCheck size={18} className="text-purple-400 mr-2" />
+        <div className="rounded-lg border border-gray-800 bg-gray-800/30 p-4 shadow-lg backdrop-blur-sm">
+          <div className="mb-2 flex items-center">
+            <FileCheck size={18} className="mr-2 text-purple-400" />
             <h3 className="font-medium text-gray-200">Verify Anything</h3>
           </div>
           <p className="text-sm text-gray-400">

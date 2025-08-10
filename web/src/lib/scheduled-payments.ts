@@ -4,6 +4,7 @@ import type { Database } from './supabase-types'
 
 type ScheduledPayment = Database['public']['Tables']['scheduled_payments']['Row']
 type ScheduledPaymentInsert = Database['public']['Tables']['scheduled_payments']['Insert']
+type ScheduledPaymentUpdate = Database['public']['Tables']['scheduled_payments']['Update']
 
 // Encryption key - in production should come from environment variables
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'galaxy-wallet-secret-key'
@@ -151,7 +152,7 @@ export class ScheduledPaymentsService {
     errorMessage?: string
   ): Promise<boolean> {
     try {
-      const updateData: any = { status }
+      const updateData: ScheduledPaymentUpdate = { status }
       
       if (status === 'executed') {
         updateData.executed_at = new Date().toISOString()

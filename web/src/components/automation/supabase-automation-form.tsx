@@ -8,9 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { FinancialImpactChart } from "@/components/automation/financial-impact-chart"
-import { Badge } from "@/components/ui/badge"
 import { useScheduledPayments } from "@/hooks/use-scheduled-payments"
 import { useWalletStore } from "@/store/wallet-store"
 import type { Automation } from "@/types/automation"
@@ -198,17 +195,37 @@ export function SupabaseAutomationForm({
   const isStepValid = () => {
     if (step === 1) {
       return formData.name.trim() !== ""
-    } else if (step === 2) {
+    }
+    
+    if (step === 2) {
       if (formData.type === "payment") {
-        return formData.recipient && formData.amount && formData.asset && formData.frequency && secretKey
+        return (
+          formData.recipient.trim() !== "" &&
+          formData.asset.trim() !== "" &&
+          formData.amount.trim() !== "" &&
+          !isNaN(Number(formData.amount)) &&
+          Number(formData.amount) > 0 &&
+          secretKey.trim() !== ""
+        )
       } else if (formData.type === "swap") {
         return (
-          formData.assetFrom && formData.assetTo && formData.amountFrom && formData.condition && formData.conditionValue
+          formData.assetFrom.trim() !== "" &&
+          formData.assetTo.trim() !== "" &&
+          formData.amountFrom.trim() !== "" &&
+          !isNaN(Number(formData.amountFrom)) &&
+          Number(formData.amountFrom) > 0 &&
+          formData.condition.trim() !== "" &&
+          formData.conditionValue.trim() !== ""
         )
       } else if (formData.type === "rule") {
-        return formData.asset && formData.threshold && formData.action
+        return (
+          formData.asset.trim() !== "" &&
+          formData.threshold !== "" &&
+          formData.action.trim() !== ""
+        )
       }
     }
+    
     return true
   }
 

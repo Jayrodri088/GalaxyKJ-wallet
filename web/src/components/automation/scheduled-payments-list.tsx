@@ -1,16 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion } from "framer-motion"
-import { Clock, Trash2, ToggleLeft, ToggleRight, Calendar, Coins, User, AlertCircle, Loader2, ExternalLink, CheckCircle, XCircle } from "lucide-react"
+import { Clock, Trash2, Calendar, Coins, User, AlertCircle, Loader2, ExternalLink, CheckCircle, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useScheduledPayments } from "@/hooks/use-scheduled-payments"
 import { useWalletStore } from "@/store/wallet-store"
-import type { Database } from "@/lib/supabase-types"
-
-type ScheduledPayment = Database['public']['Tables']['scheduled_payments']['Row']
 
 export function ScheduledPaymentsList() {
   const publicKey = useWalletStore((state) => state.publicKey)

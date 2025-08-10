@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ScheduledPaymentsService } from '@/lib/scheduled-payments'
 import { supabase } from '@/lib/supabase-client'
 import type { Database } from '@/lib/supabase-types'
@@ -21,8 +21,8 @@ export function useScheduledPayments(publicKey?: string | null) {
     getUser()
   }, [])
 
-  // Load all user payments
-  const loadPayments = async () => {
+  // Load all user payments - using useCallback to prevent infinite re-renders
+  const loadPayments = useCallback(async () => {
     if (!userId) return
 
     setLoading(true)
@@ -51,7 +51,7 @@ export function useScheduledPayments(publicKey?: string | null) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId, publicKey])
 
   // Create a new scheduled payment
   const createPayment = async (paymentData: {
@@ -121,7 +121,7 @@ export function useScheduledPayments(publicKey?: string | null) {
   // Load payments when component mounts or userId/publicKey changes
   useEffect(() => {
     loadPayments()
-  }, [userId, publicKey])
+  }, [loadPayments])
 
   return {
     payments,

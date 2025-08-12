@@ -1,3 +1,12 @@
+/**
+ * --------------------------------
+ * Enhancements:
+ * - Replaced ad-hoc boolean spinner with a reusable loading state machine (useLoadingState)
+ * - Added descriptive, step-by-step labels and a progress bar
+ * - Implemented timeout handling with Retry/Cancel (TimeoutNotice)
+ * - Success state shows a subtle animation (animate-pop) via Tailwind
+ */
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -20,6 +29,8 @@ import {
   ShieldCheck,
   FileCheck,
 } from "lucide-react";
+
+// New: Reusable loading state + UI primitives
 import { useLoadingState } from "../../hooks/use-loading-state";
 import {
   LoadingButtonContent,
@@ -28,23 +39,30 @@ import {
 } from "../ui/loading-states";
 
 export function SignMessageTab() {
+  // Form state
   const [message, setMessage] = useState("");
   const [privateKey, setPrivateKey] = useState("");
   const [signature, setSignature] = useState("");
+
+  // Error and guidance
   const [error, setError] = useState<string | null>(null);
   const [errorSuggestions, setErrorSuggestions] = useState<string[]>([]);
+
+  // UX flags
   const [signedSuccessfully, setSignedSuccessfully] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+
+  // Validation
   const [privateKeyValidation, setPrivateKeyValidation] = useState<{
     isValid: boolean;
     error?: string;
   } | null>(null);
-
   const privateKeyInputRef = useRef<HTMLInputElement>(null);
 
-  // Loading state machine with timeout + retry
+  // New: loading lifecycle with timeout + retry, tuned for wallet interactions
   const loading = useLoadingState(12000);
 
+  // Validate the private key as the user types (or when set programmatically).
   useEffect(() => {
     if (privateKey.trim()) {
       const validation = validateStellarSecretKey(privateKey);
@@ -54,24 +72,34 @@ export function SignMessageTab() {
     }
   }, [privateKey]);
 
+  /**
+   * Main sign flow:
+   * 1) Validate inputs
+   * 2) Prepare and request signature
+   * 3) Finalize, handle success/error
+   * All wrapped with withTimeout for nice UX and retry handling.
+   */
   const handleSignMessage = async () => {
+    // Clear prior state
     setError(null);
     setErrorSuggestions([]);
     setSignature("");
     setSignedSuccessfully(false);
     setCopySuccess(false);
 
+    // The runner is the actual async work; withTimeout handles lifecycle around it.
     const runner = async () => {
+      // Step 1: Validation
       loading.update({ label: "Validating inputs...", progress: 10 });
-      const privateKeyValue = privateKeyInputRef.current?.value || "";
-      if (!message || !privateKeyValue) {
+      const privateKeyValue = privateKey.trim();
+      if (!message || !privateKeyValue)
         throw new Error("Please fill in all required fields");
-      }
-      const validation = validateStellarSecretKey(privateKeyValue);
-      if (!validation.isValid) {
-        throw new Error(validation.error || "Invalid private key");
-      }
 
+      const validation = validateStellarSecretKey(privateKeyValue);
+      if (!validation.isValid)
+        throw new Error(validation.error || "Invalid private key");
+
+      // Step 2: Prepare and request signature from secure handler
       loading.update({ label: "Preparing to sign...", progress: 25 });
       loading.update({ label: "Awaiting signature...", progress: 45 });
 
@@ -80,11 +108,14 @@ export function SignMessageTab() {
         message
       );
 
+      // Step 3: Finalize
       loading.update({ label: "Finalizing...", progress: 80 });
 
       if (result.success) {
         setSignature(result.signature);
         setSignedSuccessfully(true);
+
+        // For safety, clear key input and state
         if (privateKeyInputRef.current) privateKeyInputRef.current.value = "";
         setPrivateKey("");
       } else {
@@ -102,12 +133,17 @@ export function SignMessageTab() {
           error: "Signing failed",
         },
         mapError: (e) =>
-          e instanceof Error
-            ? e.message
-            : "Failed to sign message. Please try again.",
-        onSuccess: async () => loading.update({ progress: 100 }),
+          getStellarErrorMessage(
+            e instanceof Error ? e : new Error("Failed to sign"),
+            {
+              operation: "sign_message",
+              additionalInfo: { messageLength: message.length },
+            }
+          ),
+        onSuccess: async () => loading.update({ progress: 100 }), // Smoothly reach 100%
       });
     } catch (err) {
+      // Surface domain-specific error + suggestions
       const stellarErrorMessage = getStellarErrorMessage(
         err instanceof Error ? err : new Error("Failed to sign"),
         {
@@ -124,11 +160,10 @@ export function SignMessageTab() {
     }
   };
 
+  /** Reset the form and UX state. */
   const handleReset = () => {
     setMessage("");
-    if (privateKeyInputRef.current) {
-      privateKeyInputRef.current.value = "";
-    }
+    if (privateKeyInputRef.current) privateKeyInputRef.current.value = "";
     setPrivateKey("");
     setSignature("");
     setError(null);
@@ -138,6 +173,7 @@ export function SignMessageTab() {
     loading.reset();
   };
 
+  /** Copy the signature to clipboard with error handling and transient success state. */
   const handleCopySignature = async () => {
     if (!signature) return;
     try {
@@ -163,7 +199,9 @@ export function SignMessageTab() {
 
   return (
     <div className="space-y-6">
+      {/* Card wrapper */}
       <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-6 shadow-lg backdrop-blur-md">
+        {/* Header */}
         <div>
           <h2 className="mb-1 text-xl font-bold">Sign a Message</h2>
           <p className="mb-6 text-sm text-gray-400">
@@ -172,6 +210,7 @@ export function SignMessageTab() {
         </div>
 
         <div className="space-y-4">
+          {/* Message input */}
           <div className="space-y-2">
             <label
               htmlFor="message"
@@ -188,6 +227,7 @@ export function SignMessageTab() {
             />
           </div>
 
+          {/* Private key input with validation hints */}
           <div className="space-y-2">
             <label
               htmlFor="privateKey"
@@ -231,6 +271,7 @@ export function SignMessageTab() {
             </div>
           </div>
 
+          {/* Error block with suggestions */}
           {error && (
             <div className="space-y-3 rounded border border-red-700 bg-red-900/30 p-4 text-red-200">
               <div className="flex items-start text-sm">
@@ -260,6 +301,7 @@ export function SignMessageTab() {
             </div>
           )}
 
+          {/* Success banner with subtle animation */}
           {signedSuccessfully && signature && (
             <div
               className="flex items-center rounded bg-green-900/30 p-3 text-sm text-green-200 ring-1 ring-inset ring-green-700 transition-all"
@@ -271,6 +313,7 @@ export function SignMessageTab() {
             </div>
           )}
 
+          {/* Primary actions */}
           <div className="flex gap-3 pt-2">
             <button
               onClick={handleSignMessage}
@@ -297,10 +340,16 @@ export function SignMessageTab() {
             </button>
           </div>
 
+          {/* Inline progress + timeout hint */}
           {loading.phase === "pending" && (
             <LoadingProgress
               className="mt-2"
-              value={Math.round(loading.progress)}
+              value={
+                typeof loading.progress === "number" &&
+                Number.isFinite(loading.progress)
+                  ? Math.round(loading.progress)
+                  : undefined
+              }
               label={loading.label}
             />
           )}
@@ -315,6 +364,7 @@ export function SignMessageTab() {
             </div>
           )}
 
+          {/* Signature output with copy affordance */}
           {signature && (
             <div className="mt-4 space-y-2">
               <label className="block text-sm font-medium text-gray-200">
@@ -351,6 +401,7 @@ export function SignMessageTab() {
         </div>
       </div>
 
+      {/* Informational feature cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-lg border border-gray-800 bg-gray-800/30 p-4 shadow-lg backdrop-blur-sm">
           <div className="mb-2 flex items-center">

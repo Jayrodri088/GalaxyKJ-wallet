@@ -1,14 +1,11 @@
 /**
- * ui/loading-states
  * -----------------
  * A small set of reusable loading/feedback primitives:
  * - LoadingSpinner: lightweight Lucide-based spinner with ARIA status.
  * - LoadingProgress: Progress bar with optional label (uses ui/progress wrapper).
  * - LoadingButtonContent: Drop-in content for buttons (idle/pending/success/error labels + inline progress line).
  * - TimeoutNotice: Inline banner for timeouts with Retry/Cancel actions.
- *
- * These components are headless and work with your existing UI system.
- */
+ * */
 
 "use client";
 
@@ -41,12 +38,10 @@ export function LoadingSpinner({
   );
 }
 
-/**
- * Thin progress bar with optional label above it.
- * Uses ui/progress to keep styling consistent with the rest of ui/* components.
- */
+// Thin progress bar with optional label above it.
+
 type LoadingProgressProps = {
-  value?: number; // 0-100. If undefined, caller can still render a label without a bar value.
+  value?: number;
   label?: string;
   className?: string;
 };
@@ -55,7 +50,8 @@ export function LoadingProgress({
   label,
   className = "",
 }: LoadingProgressProps) {
-  const val = typeof value === "number" ? Math.round(value) : 0;
+  const val =
+    typeof value === "number" && Number.isFinite(value) ? Math.round(value) : 0;
   return (
     <div className={`w-full ${className}`}>
       {label ? (
@@ -82,7 +78,7 @@ type LoadingButtonContentProps = {
   pendingLabel?: string;
   successLabel?: string;
   errorLabel?: string;
-  progress?: number; // used for the thin line under the text during pending
+  progress?: number;
 };
 export function LoadingButtonContent({
   phase,
@@ -124,7 +120,13 @@ export function LoadingButtonContent({
         <span className="mt-1 h-0.5 w-24 overflow-hidden rounded bg-gray-700">
           <span
             className="block h-full bg-purple-500 transition-all"
-            style={{ width: `${Math.max(10, Math.min(100, progress!))}%` }}
+            style={{
+              width: `${
+                typeof progress === "number" && Number.isFinite(progress)
+                  ? Math.max(10, Math.min(100, progress))
+                  : 10
+              }%`,
+            }}
           />
         </span>
       ) : null}
@@ -150,7 +152,11 @@ export function TimeoutNotice({
   onCancel,
 }: TimeoutNoticeProps) {
   return (
-    <div className="flex items-start gap-3 rounded-md border border-amber-700/40 bg-amber-900/20 p-3 text-amber-200">
+    <div
+      role="alert"
+      aria-live="assertive"
+      className="flex items-start gap-3 rounded-md border border-amber-700/40 bg-amber-900/20 p-3 text-amber-200"
+    >
       <CircleAlert size={18} className="mt-0.5 flex-shrink-0 text-amber-400" />
       <div className="flex-1">
         <div className="text-sm font-medium">{title}</div>

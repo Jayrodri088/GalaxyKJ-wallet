@@ -1,5 +1,4 @@
 /**
- * use-loading-state
  * -----------------
  * A small, opinionated state machine hook for long-running operations.
  * It provides:
@@ -99,14 +98,11 @@ export function useLoadingState(defaultTimeoutMs = 15000) {
 
   /** Clear any pending timers (progress tick or timeout). */
   const clearTimers = () => {
-    if (tickIntervalRef.current) {
-      clearInterval(tickIntervalRef.current);
-      tickIntervalRef.current = null;
-    }
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    // Don't clear tickIntervalRef here - it should only be cleared when operation completes
   };
 
   /**
@@ -144,7 +140,7 @@ export function useLoadingState(defaultTimeoutMs = 15000) {
       label: opts.label ?? s.label,
       sublabel: opts.sublabel ?? s.sublabel,
       progress:
-        typeof opts.progress === "number"
+        typeof opts.progress === "number" && Number.isFinite(opts.progress)
           ? Math.max(0, Math.min(100, opts.progress))
           : s.progress,
     }));
@@ -221,11 +217,18 @@ export function useLoadingState(defaultTimeoutMs = 15000) {
       });
 
       // Enforce an absolute timeout that flips to "timeout" phase
-      clearTimers();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
       timeoutRef.current = setTimeout(() => {
         if (!isMounted.current) return;
         timeout(options?.labels?.timeout ?? "Taking longer than usual");
-        options?.onTimeout?.();
+        try {
+          options?.onTimeout?.();
+        } catch {
+          // no-op: isolate onTimeout errors from breaking the flow
+        }
       }, timeoutMs);
 
       try {

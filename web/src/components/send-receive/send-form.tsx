@@ -1,3 +1,11 @@
+/**
+ * ----------------------
+ * Enhancements:
+ * - Introduced txLoading (useLoadingState) to provide consistent UX:
+ *   descriptive messages, determinate progress, timeout + retry.
+ * - Inline progress bar and timeout banner appear contextually.
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -31,7 +39,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-// Loading state + UI
+// New: loading state + UI primitives
 import { useLoadingState } from "../../hooks/use-loading-state";
 import {
   LoadingButtonContent,
@@ -44,23 +52,32 @@ const SOURCE_SECRET =
 
 export function SendForm() {
   const { toast } = useToast();
+
+  // Form state
   const [address, setAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [selectedToken, setSelectedToken] = useState("XLM");
   const [percentageSelected, setPercentageSelected] = useState<number | null>(
     null
   );
+
+  // Network hints
   const [estimatedFee, setEstimatedFee] = useState<string>();
   const [estimatedTime, setEstimatedTime] = useState<string>();
+
+  // Result dialog state
   const [modalTitle, setModalTitle] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [show, setShow] = useState(false);
+
+  // Address validation for immediate feedback
   const [addressValidation, setAddressValidation] = useState<{
     isValid: boolean;
     error?: string;
     type?: string;
   } | null>(null);
 
+  // Domain hook for Stellar payments
   const {
     sendXLM,
     loading: hookLoading,
@@ -68,10 +85,10 @@ export function SendForm() {
     estimations,
   } = useStellarPayment(SOURCE_SECRET);
 
-  // New loading state for UX feedback + timeout/retry
-  const txLoading = useLoadingState(20000); // 20s timeout for network op
+  // New: UX loading lifecycle for the transaction execution path
+  const txLoading = useLoadingState(20000); // 20s budget for network ops
 
-  // Fetch estimates on mount
+  // Fetch network fee/time estimates on mount
   useEffect(() => {
     const fetchEstimations = async () => {
       const result = await estimations();
@@ -83,35 +100,35 @@ export function SendForm() {
     fetchEstimations();
   }, [estimations]);
 
-  // Show result modal and toasts when txResult changes
+  // Show result dialog and toast upon transaction completion (success or error)
   useEffect(() => {
-    if (txResult) {
-      if (txResult.success) {
-        setModalTitle("Transaction Successful");
-        setIsSuccess(true);
-        txLoading.succeed("Sent");
-        toast({
-          title: "Success!",
-          description: `Transaction sent. Hash: ${txResult.hash}`,
-        });
-        // clear on success
-        setAddress("");
-        setAmount("");
-        setPercentageSelected(null);
-      } else if (txResult.error) {
-        setModalTitle("Transaction Failed");
-        setIsSuccess(false);
-        txLoading.fail(txResult.error, "Failed");
-        toast({
-          title: "Transaction Failed",
-          description: txResult.error,
-        });
-      }
-      setShow(true);
+    if (!txResult) return;
+    if (txResult.success) {
+      setModalTitle("Transaction Successful");
+      setIsSuccess(true);
+      txLoading.succeed("Sent");
+      toast({
+        title: "Success!",
+        description: `Transaction sent. Hash: ${txResult.hash}`,
+      });
+      // Clear form after a success
+      setAddress("");
+      setAmount("");
+      setPercentageSelected(null);
+    } else if (txResult.error) {
+      setModalTitle("Transaction Failed");
+      setIsSuccess(false);
+      txLoading.fail(txResult.error, "Failed");
+      toast({
+        title: "Transaction Failed",
+        description: txResult.error,
+      });
     }
+    setShow(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txResult]);
 
+  // Address validation as user types
   useEffect(() => {
     if (address.trim()) {
       const validation = validateStellarAddress(address);
@@ -121,6 +138,7 @@ export function SendForm() {
     }
   }, [address]);
 
+  // Asset options (local demo data)
   const tokens = [
     { symbol: "XLM", name: "Stellar Lumens", balance: 1250.75 },
     { symbol: "USDC", name: "USD Coin", balance: 350.0 },
@@ -130,6 +148,7 @@ export function SendForm() {
   const selectedTokenData =
     tokens.find((t) => t.symbol === selectedToken) || tokens[0];
 
+  /** Paste from clipboard (with toast feedback). */
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
@@ -146,13 +165,12 @@ export function SendForm() {
     }
   };
 
+  /** Show a QR scanner affordance (placeholder). */
   const handleScanQR = () => {
-    toast({
-      title: "QR Scanner",
-      description: "QR scanner would open here",
-    });
+    toast({ title: "QR Scanner", description: "QR scanner would open here" });
   };
 
+  /** Quick amount selection by percentage of available balance. */
   const handlePercentageSelect = (percentage: number) => {
     setPercentageSelected(percentage);
     const calculatedAmount = (
@@ -162,7 +180,14 @@ export function SendForm() {
     setAmount(calculatedAmount);
   };
 
+  /**
+   * Main send flow:
+   * - Provide immediate toast.
+   * - Wrap the underlying sendXLM with txLoading.withTimeout to surface steps/timeout.
+   * - txResult effect handles final success/failure surfaces and toasts.
+   */
   const handleSend = async () => {
+    // Early feedback
     toast({
       title: "Transaction initiated",
       description: `Sending ${amount} ${selectedToken} to ${address.substring(
@@ -171,7 +196,9 @@ export function SendForm() {
       )}...${address.substring(address.length - 4)}`,
     });
 
+    // The runner is the actual async operation
     const runner = async () => {
+      // Helpful step labels for users
       txLoading.update({ label: "Building transaction...", progress: 20 });
       const result = await sendXLM({ destination: address, amount });
       txLoading.update({
@@ -191,27 +218,34 @@ export function SendForm() {
           error: "Failed",
         },
         onSuccess: async () => {
-          txLoading.update({ progress: Math.max(85, txLoading.progress) });
+          // Encourage smooth finish; txResult effect will finalize
+          const current =
+            typeof txLoading.progress === "number" &&
+            Number.isFinite(txLoading.progress)
+              ? txLoading.progress
+              : 0;
+          txLoading.update({ progress: Math.max(85, current) });
         },
         onTimeout: () => {
-          // Inline timeout notice will appear; you could also open a modal here if desired
+          // We show inline TimeoutNotice automatically; no modal required.
         },
         mapError: (e) =>
           e instanceof Error ? e.message : "Transaction failed",
       });
     } catch {
-      // Errors surfaced by txLoading and txResult effect
+      // Failure surfaced by txLoading and txResult effect; nothing else to do.
     }
   };
 
+  // Basic form validation (address valid + positive amount)
   const isValidForm =
     address.length > 0 &&
     amount.length > 0 &&
     Number(amount) > 0 &&
-    addressValidation?.isValid === true;
+    addressValidation?.isValid;
 
-  // Effective pending merges your hook's loading with our UX loading state
-  const isPending = hookLoading || txLoading.phase === "pending";
+  // Effective pending merges the domain hook's loading with our UX loading
+  const isPending = Boolean(hookLoading) || txLoading.phase === "pending";
 
   return (
     <CardContent className="p-6">
@@ -272,10 +306,7 @@ export function SendForm() {
           {addressValidation?.isValid && (
             <div className="flex items-center gap-1.5 text-green-400 text-xs mt-1">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Valid Stellar{" "}
-              {addressValidation.type === "muxed_account"
-                ? "muxed account"
-                : "address"}
+              Valid Stellar address
             </div>
           )}
         </div>
@@ -293,12 +324,7 @@ export function SendForm() {
               <SelectValue placeholder="Select token" />
             </SelectTrigger>
             <SelectContent className="bg-[#12132A] border-[#1F2037] text-white">
-              {[
-                { symbol: "XLM", name: "Stellar Lumens", balance: 1250.75 },
-                { symbol: "USDC", name: "USD Coin", balance: 350.0 },
-                { symbol: "BTC", name: "Bitcoin", balance: 0.0045 },
-                { symbol: "ETH", name: "Ethereum", balance: 0.12 },
-              ].map((token) => (
+              {tokens.map((token) => (
                 <SelectItem
                   key={token.symbol}
                   value={token.symbol}
@@ -330,26 +356,8 @@ export function SendForm() {
             </Label>
             <span className="text-sm text-gray-400">
               Available:{" "}
-              {(
-                (
-                  [
-                    { symbol: "XLM", name: "Stellar Lumens", balance: 1250.75 },
-                    { symbol: "USDC", name: "USD Coin", balance: 350.0 },
-                    { symbol: "BTC", name: "Bitcoin", balance: 0.0045 },
-                    { symbol: "ETH", name: "Ethereum", balance: 0.12 },
-                  ].find((t) => t.symbol === selectedToken) || { balance: 0 }
-                ).balance as number
-              ).toFixed(
-                (
-                  [
-                    { symbol: "XLM", name: "Stellar Lumens", balance: 1250.75 },
-                    { symbol: "USDC", name: "USD Coin", balance: 350.0 },
-                    { symbol: "BTC", name: "Bitcoin", balance: 0.0045 },
-                    { symbol: "ETH", name: "Ethereum", balance: 0.12 },
-                  ].find((t) => t.symbol === selectedToken) || { balance: 0 }
-                ).balance < 1
-                  ? 4
-                  : 2
+              {selectedTokenData.balance.toFixed(
+                selectedTokenData.balance < 1 ? 4 : 2
               )}{" "}
               {selectedToken}
             </span>
@@ -419,7 +427,7 @@ export function SendForm() {
           </div>
         </div>
 
-        {/* Send Button with improved content */}
+        {/* Send Button (with LoadingButtonContent for phase-specific labels/icons) */}
         <Button
           className={`w-full h-11 text-sm font-medium flex items-center justify-center gap-2 ${
             isValidForm && !isPending
@@ -445,11 +453,16 @@ export function SendForm() {
           />
         </Button>
 
-        {/* Inline progress + timeout banner */}
+        {/* Inline progress + timeout banner, contextual to the operation */}
         {txLoading.phase === "pending" && (
           <LoadingProgress
             className="mt-2"
-            value={Math.round(txLoading.progress)}
+            value={
+              typeof txLoading.progress === "number" &&
+              Number.isFinite(txLoading.progress)
+                ? Math.round(txLoading.progress)
+                : undefined
+            }
             label={txLoading.label}
           />
         )}
@@ -464,7 +477,7 @@ export function SendForm() {
           </div>
         )}
 
-        {/* Warning */}
+        {/* Safety tip */}
         <div className="flex items-start gap-2 text-xs text-yellow-500/90 bg-yellow-500/5 rounded-md p-3">
           <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
           <p>
@@ -474,7 +487,7 @@ export function SendForm() {
         </div>
       </div>
 
-      {/* Result dialog stays the same, uses your reused Radix UI components */}
+      {/* Result Dialog (unchanged; consistent with your ui/dialog wrapper) */}
       <Dialog open={show} onOpenChange={setShow}>
         <DialogContent className="sm:max-w-md bg-[#12132A] border-[#1F2037]">
           <DialogHeader>

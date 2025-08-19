@@ -1,13 +1,15 @@
-import CryptoConverter from "@/components/ cryptocurrency-converter/crypto-converter"
+'use client'
+
+import dynamic from 'next/dynamic'
 import { ArrowLeft } from "lucide-react"
-import type { Metadata } from "next"
 import Link from "next/link"
 import { StarBackground } from "@/components/effects/star-background"
 
-export const metadata: Metadata = {
-  title: "Cryptocurrency Converter",
-  description: "Convert between cryptocurrencies and fiat currencies",
-}
+// Dynamic import to prevent SSR issues with SecureKeyProvider
+const CryptoConverter = dynamic(
+  () => import("@/components/ cryptocurrency-converter/crypto-converter"),
+  { ssr: false }
+)
 
 export default function Home() {
   return (

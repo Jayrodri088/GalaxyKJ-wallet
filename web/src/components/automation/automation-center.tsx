@@ -446,12 +446,16 @@ export function AutomationCenter() {
                                               Frequency
                                             </span>
                                             <span className="text-sm">
-                                              {automation.frequency === "daily"
-                                                ? "Daily"
+                                              {automation.frequency === "once"
+                                                ? "Once"
                                                 : automation.frequency ===
                                                   "weekly"
                                                 ? "Weekly"
-                                                : "Monthly"}
+                                                : automation.frequency === "monthly"
+                                                ? "Monthly"
+                                                : automation.frequency === "yearly"
+                                                ? "Yearly"
+                                                : "Unknown"}
                                             </span>
                                           </div>
                                           {automation.memo && (

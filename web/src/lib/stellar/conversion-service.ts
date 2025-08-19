@@ -88,7 +88,8 @@ export class StellarConversionService {
 
   // Type guard to check if a balance object has a limit property
   private hasLimit(balance: unknown): balance is { limit: string } {
-    return balance && typeof balance === 'object' && 'limit' in balance && typeof balance.limit === 'string';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return Boolean(balance && typeof balance === 'object' && 'limit' in balance && typeof (balance as any).limit === 'string');
   }
 
   async checkTrustline(accountPublicKey: string, asset: StellarAsset): Promise<TrustlineInfo> {

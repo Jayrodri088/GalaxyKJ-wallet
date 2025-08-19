@@ -36,6 +36,7 @@
     "src/scripts/stellar/test-create-account.cjs"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "supabase/functions"
   ]
 }

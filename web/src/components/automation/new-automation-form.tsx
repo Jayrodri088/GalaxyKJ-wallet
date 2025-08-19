@@ -83,7 +83,7 @@ export function NewAutomationForm({
     let description = ""
     if (formData.type === "payment") {
       description = `Send ${formData.amount} ${formData.asset} ${
-        formData.frequency === "daily" ? "every day" : formData.frequency === "weekly" ? "every week" : "every month"
+        formData.frequency === "once" ? "once" : formData.frequency === "weekly" ? "every week" : formData.frequency === "monthly" ? "every month" : formData.frequency === "yearly" ? "every year" : "periodically"
       } to ${formData.recipient}`
     } else if (formData.type === "swap") {
       description = `Convert ${formData.amountFrom} ${formData.assetFrom} to ${formData.assetTo} when ${
@@ -113,12 +113,14 @@ export function NewAutomationForm({
     let nextExecution = null
     if (formData.type === "payment") {
       const now = new Date()
-      if (formData.frequency === "daily") {
-        nextExecution = new Date(now.setDate(now.getDate() + 1))
+      if (formData.frequency === "once") {
+        nextExecution = new Date(now.getTime() + 24 * 60 * 60 * 1000) // 1 day from now
       } else if (formData.frequency === "weekly") {
         nextExecution = new Date(now.setDate(now.getDate() + 7))
-      } else {
+      } else if (formData.frequency === "monthly") {
         nextExecution = new Date(now.setMonth(now.getMonth() + 1))
+      } else if (formData.frequency === "yearly") {
+        nextExecution = new Date(now.setFullYear(now.getFullYear() + 1))
       }
     }
 
@@ -571,11 +573,15 @@ export function NewAutomationForm({
                   <p className="text-sm text-gray-400">
                     {formData.type === "payment" &&
                       `Send ${formData.amount} ${formData.asset} ${
-                        formData.frequency === "daily"
-                          ? "every day"
+                        formData.frequency === "once"
+                          ? "once"
                           : formData.frequency === "weekly"
                             ? "every week"
-                            : "every month"
+                            : formData.frequency === "monthly"
+                              ? "every month"
+                              : formData.frequency === "yearly"
+                                ? "every year"
+                                : "periodically"
                       } to ${formData.recipient}`}
                     {formData.type === "swap" &&
                       `Convert ${formData.amountFrom} ${formData.assetFrom} to ${formData.assetTo} when ${
@@ -612,11 +618,15 @@ export function NewAutomationForm({
                   <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                   <p>
                     This automation will use approximately{" "}
-                    {formData.frequency === "daily"
-                      ? Number(formData.amount) * 365
+                    {formData.frequency === "once"
+                      ? Number(formData.amount)
                       : formData.frequency === "weekly"
                         ? Number(formData.amount) * 52
-                        : Number(formData.amount) * 12}{" "}
+                        : formData.frequency === "monthly"
+                          ? Number(formData.amount) * 12
+                          : formData.frequency === "yearly"
+                            ? Number(formData.amount)
+                            : Number(formData.amount) * 12}{" "}
                     {formData.asset} per year.
                   </p>
                 </div>

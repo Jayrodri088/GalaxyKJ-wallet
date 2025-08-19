@@ -200,28 +200,28 @@ export function SupabaseAutomationForm({
     if (step === 2) {
       if (formData.type === "payment") {
         return (
-          formData.recipient.trim() !== "" &&
-          formData.asset.trim() !== "" &&
-          formData.amount.trim() !== "" &&
+          formData.recipient?.trim() !== "" &&
+          formData.asset?.trim() !== "" &&
+          String(formData.amount || "").trim() !== "" &&
           !isNaN(Number(formData.amount)) &&
           Number(formData.amount) > 0 &&
           secretKey.trim() !== ""
         )
       } else if (formData.type === "swap") {
         return (
-          formData.assetFrom.trim() !== "" &&
-          formData.assetTo.trim() !== "" &&
-          formData.amountFrom.trim() !== "" &&
+          formData.assetFrom?.trim() !== "" &&
+          formData.assetTo?.trim() !== "" &&
+          String(formData.amountFrom || "").trim() !== "" &&
           !isNaN(Number(formData.amountFrom)) &&
           Number(formData.amountFrom) > 0 &&
-          formData.condition.trim() !== "" &&
-          formData.conditionValue.trim() !== ""
+          formData.condition?.trim() !== "" &&
+          String(formData.conditionValue || "").trim() !== ""
         )
       } else if (formData.type === "rule") {
         return (
-          formData.asset.trim() !== "" &&
-          formData.threshold !== "" &&
-          formData.action.trim() !== ""
+          formData.asset?.trim() !== "" &&
+          String(formData.threshold || "").trim() !== "" &&
+          formData.action?.trim() !== ""
         )
       }
     }

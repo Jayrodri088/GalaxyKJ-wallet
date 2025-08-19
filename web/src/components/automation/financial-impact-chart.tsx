@@ -28,7 +28,7 @@ export function FinancialImpactChart({ automation }: FinancialImpactChartProps) 
 
       const amount = Number.parseFloat(automation.amount as string) || 10
       const frequency = automation.frequency || "monthly"
-      const multiplier = frequency === "daily" ? 30 : frequency === "weekly" ? 4 : 1
+      const multiplier = frequency === "weekly" ? 4 : frequency === "monthly" ? 1 : frequency === "yearly" ? 1/12 : 1
 
       const baseBalance = 1000
       const monthlyPayment = amount * multiplier

@@ -20,43 +20,49 @@ The **Invisible Wallets** system eliminates the complexity of managing Stellar b
    - Your first wallet integration
    - Essential operations and examples
 
-3. **[API Reference](./invisible-wallet/api-reference.md)**
+3. **[Platform Integration Guide](./invisible-wallet/platform-integration.md)**
+   - How to consume Galaxy Wallet in your applications
+   - Integration models and examples
+   - E-commerce, gaming, and DeFi integrations
+   - Custom branding and white-label solutions
+
+4. **[API Reference](./invisible-wallet/api-reference.md)**
    - Complete API documentation
    - TypeScript interfaces and types
    - Method signatures and parameters
    - Return types and error codes
 
-4. **[Architecture Overview](./invisible-wallet/architecture.md)**
+5. **[Architecture Overview](./invisible-wallet/architecture.md)**
    - System design and components
    - Data flow and security model
    - Storage and network layers
    - Performance considerations
 
-5. **[Security Model](./invisible-wallet/security.md)**
+6. **[Security Model](./invisible-wallet/security.md)**
    - Cryptographic foundation
    - Security architecture and threat model
    - Browser security and compliance
    - Best practices and recommendations
 
-6. **[Error Handling](./invisible-wallet/error-handling.md)**
+7. **[Error Handling](./invisible-wallet/error-handling.md)**
    - Comprehensive error management
    - Error types and codes
    - User-friendly error messages
    - Recovery strategies
 
-7. **[Examples & Use Cases](./invisible-wallet/examples.md)**
+8. **[Examples & Use Cases](./invisible-wallet/examples.md)**
    - Real-world integration examples
    - E-commerce and gaming scenarios
    - Advanced usage patterns
    - Complete code samples
 
-8. **[Production Deployment](./invisible-wallet/production.md)**
+9. **[Production Deployment](./invisible-wallet/production.md)**
    - Production readiness checklist
    - Security configuration
    - Performance optimization
    - Monitoring and maintenance
 
-9. **[Troubleshooting Guide](./invisible-wallet/troubleshooting.md)**
+10. **[Troubleshooting Guide](./invisible-wallet/troubleshooting.md)**
    - Common issues and solutions
    - Debugging tools and techniques
    - Self-diagnosis checklist

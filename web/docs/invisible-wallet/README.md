@@ -19,9 +19,9 @@
 ## 📖 Table of Contents
 
 1. [Quick Start Guide](./quick-start.md)
-2. [Architecture Overview](./architecture.md)
-3. [API Reference](./api-reference.md)
-4. [React Hooks Guide](./react-hooks.md)
+2. [Platform Integration](./platform-integration.md)
+3. [Architecture Overview](./architecture.md)
+4. [API Reference](./api-reference.md)
 5. [Security Model](./security.md)
 6. [Error Handling](./error-handling.md)
 7. [Examples](./examples.md)

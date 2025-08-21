@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/globals.css";
 import { StarBackground } from "@/components/effects/star-background";
 import { LanguageProvider } from "@/contexts/language-provider";
+import { OfflineStatusToast } from "@/components/ui/offline-indicator";
+import { registerServiceWorker } from "@/lib/register-sw";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +29,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Registrar service worker en el cliente
+  if (typeof window !== 'undefined') {
+    registerServiceWorker();
+  }
+
   return (
     <html lang="en">
       <body
@@ -36,6 +43,7 @@ export default function RootLayout({
         <LanguageProvider>
           <StarBackground />
           <main className="relative z-10">{children}</main>
+          <OfflineStatusToast />
         </LanguageProvider>
       </body>
     </html>

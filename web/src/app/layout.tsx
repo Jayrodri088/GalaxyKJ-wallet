@@ -5,6 +5,9 @@ import { StarBackground } from "@/components/effects/star-background";
 import { LanguageProvider } from "@/contexts/language-provider";
 import { OfflineStatusToast } from "@/components/ui/offline-indicator";
 import { registerServiceWorker } from "@/lib/register-sw";
+import { AnalyticsProvider } from "@/components/ui/analytics-provider";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { PrivacyConsentBanner } from "@/components/ui/privacy-consent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,11 +43,16 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased relative bg-[#0A0B1E] text-white`}
         suppressHydrationWarning={true}
       >
-        <LanguageProvider>
-          <StarBackground />
-          <main className="relative z-10">{children}</main>
-          <OfflineStatusToast />
-        </LanguageProvider>
+        <ErrorBoundary>
+          <AnalyticsProvider>
+            <LanguageProvider>
+              <StarBackground />
+              <main className="relative z-10">{children}</main>
+              <OfflineStatusToast />
+              <PrivacyConsentBanner />
+            </LanguageProvider>
+          </AnalyticsProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

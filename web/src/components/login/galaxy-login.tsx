@@ -17,6 +17,8 @@ interface GalaxyLoginProps {
 export function GalaxyLogin({ onLoginSuccess, onRecoveryClick, onClose }: GalaxyLoginProps) {
   const router = useRouter()
 
+  console.log("🚀 GalaxyLogin component rendered")
+
   const {
     password,
     setPassword,
@@ -27,9 +29,12 @@ export function GalaxyLogin({ onLoginSuccess, onRecoveryClick, onClose }: Galaxy
     hasWallet,
     unlockWallet,
   } = useLogin((decryptedPrivateKey: string) => {
+    console.log("🎉 Login success callback triggered")
     onLoginSuccess(decryptedPrivateKey)
     router.push("/dashboard")
   })
+
+  console.log("📊 GalaxyLogin state:", { hasWallet, error, isLoading })
 
   return (
     <div className="relative w-full max-w-md bg-gray-900/50 border border-gray-800 backdrop-blur-md p-8 shadow-lg rounded-xl text-white">

@@ -5,28 +5,9 @@ import { useRouter } from "next/navigation"
 import { useScroll } from "framer-motion"
 import { openDB } from "idb"
 
-// Initialize the database with proper schema while preserving existing data
-const initDB = async () => {
-  try {
-    const db = await openDB("galaxy-wallet-db", 1, {
-      upgrade(db) {
-        // Create the object store if it doesn't exist
-        if (!db.objectStoreNames.contains("encrypted-wallet")) {
-          const store = db.createObjectStore("encrypted-wallet", {
-            keyPath: "id",
-            autoIncrement: true
-          })
-          // Create any indexes if needed
-          store.createIndex("wallet", "wallet", { unique: false })
-        }
-      },
-    })
-    return db
-  } catch (error) {
-    console.error("Error initializing database:", error)
-    throw error
-  }
-}
+// Database configuration constants
+const DB_NAME = "wallet-db"
+const STORE_NAME = "encrypted-wallet"
 
 import { StarBackground } from "@/components/effects/star-background"
 import { ShootingStarsEffect } from "@/components/effects/shooting-stars-effect"
@@ -58,21 +39,33 @@ export function WelcomeScreen() {
 
   const handleGetStarted = async () => {
     try {
-      const db = await initDB()
-      const tx = db.transaction("encrypted-wallet", "readonly")
-      const store = tx.objectStore("encrypted-wallet")
-      const wallets = await store.getAll()
+      console.log("🔍 WelcomeScreen: Checking for existing wallets...")
+      const db = await openDB(DB_NAME, 1, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            const store = db.createObjectStore(STORE_NAME, {
+              keyPath: "id",
+              autoIncrement: true
+            })
+            store.createIndex("wallet", "wallet", { unique: false })
+          }
+        },
+      })
+      
+      const wallets = await db.getAll(STORE_NAME)
+      console.log(`📊 WelcomeScreen: Found ${wallets.length} wallets`)
       
       if (wallets && wallets.length > 0) {
+        console.log("✅ WelcomeScreen: Opening login modal")
         setIsLoginModalOpen(true)
       } else {
+        console.log("📝 WelcomeScreen: Opening create wallet modal")
         setIsCreateModalOpen(true)
       }
       
-      // Close the transaction
-      await tx.done
+      await db.close()
     } catch (error) {
-      console.error("Error accessing wallet:", error)
+      console.error("❌ WelcomeScreen: Error accessing wallet:", error)
       // If there's an error, assume no wallet exists and show creation screen
       setIsCreateModalOpen(true)
     }

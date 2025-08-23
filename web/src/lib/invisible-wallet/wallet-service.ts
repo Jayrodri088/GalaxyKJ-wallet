@@ -39,6 +39,73 @@ const STELLAR_NETWORKS = {
 } as const;
 
 /**
+ * Network request configuration
+ */
+const NETWORK_CONFIG = {
+  timeout: 10000, // 10 seconds
+  retries: 3,
+  retryDelay: 1000, // 1 second
+};
+
+/**
+ * Helper function to make network requests with retry logic
+ */
+async function makeNetworkRequest<T>(
+  requestFn: () => Promise<T>,
+  retries: number = NETWORK_CONFIG.retries
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await requestFn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // If this is the last attempt, throw the error
+      if (attempt === retries) {
+        break;
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, NETWORK_CONFIG.retryDelay * (attempt + 1)));
+    }
+  }
+  
+  throw lastError!;
+}
+
+/**
+ * Helper function to create a timeout promise
+ */
+function createTimeoutPromise<T>(timeoutMs: number): Promise<T> {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Request timeout')), timeoutMs);
+  });
+}
+
+/**
+ * Helper function to safely create Stellar server instance
+ */
+function createStellarServer(network: NetworkType): Horizon.Server | null {
+  try {
+    // Check if Stellar SDK components are available
+    if (!Horizon || !STELLAR_NETWORKS[network]) {
+      console.error('Stellar SDK not properly initialized');
+      return null;
+    }
+    
+    const networkConfig = STELLAR_NETWORKS[network];
+    return new Horizon.Server(networkConfig.horizonURL, {
+      allowHttp: network === 'testnet', // Allow HTTP for testnet
+    });
+  } catch (error) {
+    console.error('Failed to create Stellar server instance:', error);
+    return null;
+  }
+}
+
+/**
  * Storage interface for wallet persistence
  */
 export interface WalletStorage {
@@ -460,16 +527,32 @@ export class InvisibleWalletService {
         return null;
       }
 
-      // Get Stellar account information
-      const networkConfig = STELLAR_NETWORKS[network];
-      const server = new Horizon.Server(networkConfig.horizonURL);
+      // Get Stellar account information with improved error handling
+      const server = createStellarServer(network);
+      
+      if (!server) {
+        console.warn('Failed to create Stellar server instance, returning wallet without balance');
+        return {
+          ...this.toWalletResponse(wallet),
+          balances: [],
+          sequence: '0',
+          accountExists: false,
+        };
+      }
 
       let balances: StellarBalance[] = [];
       let sequence = '0';
       let accountExists = false;
 
       try {
-        const account = await server.loadAccount(wallet.publicKey);
+        // Use retry logic for network requests
+        const account = await makeNetworkRequest(async () => {
+          return await Promise.race([
+            server.loadAccount(wallet.publicKey),
+            createTimeoutPromise<never>(NETWORK_CONFIG.timeout)
+          ]);
+        });
+
         accountExists = true;
         sequence = account.sequence;
         
@@ -479,9 +562,18 @@ export class InvisibleWalletService {
           assetCode: balance.asset_type === 'native' ? 'XLM' : (balance as unknown as Record<string, unknown>).asset_code as string,
           assetIssuer: balance.asset_type === 'native' ? undefined : (balance as unknown as Record<string, unknown>).asset_issuer as string,
         }));
-      } catch {
-        // Account doesn't exist yet
+      } catch (error) {
+        // Account doesn't exist yet or network error
+        console.warn('Failed to load Stellar account:', error);
         accountExists = false;
+        
+        // Return wallet without balance information rather than failing completely
+        return {
+          ...this.toWalletResponse(wallet),
+          balances: [],
+          sequence: '0',
+          accountExists: false,
+        };
       }
 
       return {
@@ -503,13 +595,27 @@ export class InvisibleWalletService {
   private async fundTestnetAccount(publicKey: string): Promise<void> {
     try {
       const friendbotURL = STELLAR_NETWORKS.testnet.friendbotURL;
-      const response = await fetch(`${friendbotURL}?addr=${publicKey}`);
       
-      if (!response.ok) {
-        console.warn('Failed to fund testnet account:', await response.text());
-      }
+      // Use retry logic for friendbot funding
+      await makeNetworkRequest(async () => {
+        const response = await Promise.race([
+          fetch(`${friendbotURL}?addr=${publicKey}`),
+          createTimeoutPromise<Response>(NETWORK_CONFIG.timeout)
+        ]);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.warn('Failed to fund testnet account:', errorText);
+          throw new Error(`Friendbot funding failed: ${response.status} ${errorText}`);
+        }
+        
+        return response;
+      });
+      
+      console.log('Testnet account funded successfully:', publicKey);
     } catch (error) {
       console.warn('Friendbot funding failed:', error);
+      // Don't throw error - funding failure shouldn't prevent wallet creation
     }
   }
 

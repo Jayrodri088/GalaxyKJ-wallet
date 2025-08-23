@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { fetchTransactions } from "@/lib/stellar/transactions"
 import { useWalletStore } from "@/store/wallet-store"
 
@@ -20,6 +20,11 @@ interface Transaction {
   status: TransactionStatus
 }
 
+// Helper function to validate Stellar public key
+const isValidStellarPublicKey = (key: string): boolean => {
+  return Boolean(key && key.length === 56 && key.startsWith('G'));
+};
+
 export function useTransactionSearch() {
   const [searchQuery, setSearchQuery] = useState("")
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -28,10 +33,15 @@ export function useTransactionSearch() {
   const [hasSearched, setHasSearched] = useState(false)
   const publicKey = useWalletStore((state) => state.publicKey)
 
-  // Load initial transactions
+  // Load initial transactions with validation
   useEffect(() => {
     const loadTransactions = async () => {
-      if (!publicKey) return
+      // Validate public key before making API calls
+      if (!publicKey || !isValidStellarPublicKey(publicKey)) {
+        console.log('No valid public key available, skipping transaction fetch');
+        setTransactions([]);
+        return;
+      }
       
       try {
         setIsLoading(true)
@@ -48,7 +58,9 @@ export function useTransactionSearch() {
       }
     }
 
-    loadTransactions()
+    // Add a small delay to prevent rapid successive calls
+    const timeoutId = setTimeout(loadTransactions, 100);
+    return () => clearTimeout(timeoutId);
   }, [publicKey])
 
   // Filter transactions based on search query
@@ -90,7 +102,7 @@ export function useTransactionSearch() {
     })
   }, [transactions, searchQuery])
 
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query)
     setIsSearching(true)
     setHasSearched(true)
@@ -99,13 +111,13 @@ export function useTransactionSearch() {
     setTimeout(() => {
       setIsSearching(false)
     }, 300)
-  }
+  }, [])
 
-  const clearSearch = () => {
+  const clearSearch = useCallback(() => {
     setSearchQuery("")
     setHasSearched(false)
     setIsSearching(false)
-  }
+  }, [])
 
   return {
     searchQuery,
@@ -117,5 +129,6 @@ export function useTransactionSearch() {
     hasSearched,
     hasResults: filteredTransactions.length > 0,
     totalTransactions: transactions.length,
+    hasValidPublicKey: publicKey ? isValidStellarPublicKey(publicKey) : false,
   }
 } 

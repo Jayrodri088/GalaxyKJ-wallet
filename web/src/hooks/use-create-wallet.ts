@@ -57,16 +57,26 @@ export function useCreateWallet(
       const publicKey = keypair.publicKey()
 
       if (STELLAR_CONFIG.friendbotURL) {
-        const res = await fetch(`${STELLAR_CONFIG.friendbotURL}?addr=${publicKey}`)
-        if (!res.ok) {
-          const errText = await res.text()
-          throw new Error(`Friendbot error: ${errText}`)
+        try {
+          const res = await fetch(`${STELLAR_CONFIG.friendbotURL}?addr=${publicKey}`)
+          if (!res.ok) {
+            const errText = await res.text()
+            console.warn(`Friendbot error: ${errText}`)
+          } else {
+            console.log('Account funded successfully via Friendbot')
+          }
+          await new Promise((r) => setTimeout(r, 1500))
+        } catch (error) {
+          console.warn('Friendbot request failed:', error)
+          // Continue with wallet creation even if friendbot fails
         }
-        await new Promise((r) => setTimeout(r, 1500))
       }
 
       const encrypted = await encryptPrivateKey(keypair.secret(), password)
+      console.log("Wallet encrypted successfully")
+      
       await saveEncryptedWallet(encrypted)
+      console.log("Wallet saved to database successfully")
 
       setPublicKey(publicKey)
       onWalletCreated()

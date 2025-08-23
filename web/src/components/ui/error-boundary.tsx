@@ -110,12 +110,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // Report error to monitoring systems
     try {
       // Report to crash reporter
-      reportReactError(error, errorInfo);
+      reportReactError(error, { componentStack: errorInfo.componentStack || '' });
       
       // Track with analytics
       trackAnalyticsError(error, {
         type: 'react_error_boundary',
-        componentStack: errorInfo.componentStack,
+        componentStack: errorInfo.componentStack || '',
         errorBoundary: true
       });
     } catch (reportingError) {

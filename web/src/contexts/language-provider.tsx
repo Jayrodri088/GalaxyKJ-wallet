@@ -11,8 +11,20 @@ export const LanguageProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     setIsClient(true);
     const loadTranslations = async () => {
-      await i18n.reloadResources();
-      await i18n.loadNamespaces("common");
+      try {
+        // Only reload resources if they exist
+        if (i18n.reloadResources) {
+          await i18n.reloadResources();
+        }
+        
+        // Only load namespaces if they exist
+        if (i18n.loadNamespaces) {
+          await i18n.loadNamespaces("common");
+        }
+      } catch (error) {
+        console.warn("Failed to load translations:", error);
+        // Continue without translations rather than crashing
+      }
     };
 
     loadTranslations();

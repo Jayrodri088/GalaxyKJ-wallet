@@ -1,9 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { Info } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Calculator, Info, AlertTriangle, Zap, Clock, DollarSign } from "lucide-react"
+import { useCryptoPrices } from "@/hooks/use-crypto-prices"
 
 export default function NetworkFeeCalculator() {
+  const { getPrice } = useCryptoPrices()
   const [network, setNetwork] = useState("xlm")
   const [operations, setOperations] = useState("1")
   const [speed, setSpeed] = useState(1)
@@ -130,7 +139,7 @@ export default function NetworkFeeCalculator() {
             <div className="text-right">
               <p className="text-xs text-gray-400">
                 ≈ $
-                {(Number.parseFloat(fee) * (network === "xlm" ? 0.39 : network === "btc" ? 68245.12 : 3245.67)).toFixed(
+                {(Number.parseFloat(fee) * (network === "xlm" ? getPrice("XLM") : network === "btc" ? getPrice("BTC") : getPrice("ETH"))).toFixed(
                   6,
                 )}{" "}
                 USD

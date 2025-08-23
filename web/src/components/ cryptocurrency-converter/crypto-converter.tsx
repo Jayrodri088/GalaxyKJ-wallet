@@ -1,81 +1,79 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { ArrowRight, FileText, MoveRight, Repeat, AlertCircle, CheckCircle, Loader2, Shield, Eye, EyeOff } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Loader2, ArrowRight, Shield, AlertTriangle, Info, CheckCircle, XCircle, Repeat, FileText, MoveRight, AlertCircle, Eye, EyeOff } from "lucide-react"
+import { useStellarConversion } from "@/hooks/use-stellar-conversion"
+import { useCryptoPrices } from "@/hooks/use-crypto-prices"
 import ExchangeRateChart from "@/components/ cryptocurrency-converter/exchange-rate-chart"
 import MarketOverview from "@/components/ cryptocurrency-converter/market-overview"
 import ConversionHistory from "@/components/ cryptocurrency-converter/conversion-history"
 import ConversionTips from "@/components/ cryptocurrency-converter/conversion-tips"
 import NetworkFeeCalculator from "@/components/ cryptocurrency-converter/network-fee-calculator"
-import { useStellarConversion } from "@/hooks/use-stellar-conversion"
-import { useSecureKey } from "@/contexts/secure-key-context"
 
-const cryptoData = [
-  { 
-    id: "xlm", 
-    name: "Stellar Lumens", 
-    symbol: "XLM", 
-    price: 0.39, 
-    change: 2.5, 
-    color: "bg-blue-500",
-    gradient: "from-blue-500 to-indigo-600", 
-    letter: "X" 
-  },
-  { 
-    id: "usdc", 
-    name: "USD Coin", 
-    symbol: "USDC", 
-    price: 1.0, 
-    change: 0, 
-    color: "bg-blue-500",
-    gradient: "from-blue-500 to-cyan-400", 
-    letter: "U" 
-  },
-  { 
-    id: "btc", 
-    name: "Bitcoin", 
-    symbol: "BTC", 
-    price: 68245.12, 
-    change: -1.2, 
-    color: "bg-purple-600",
-    gradient: "from-purple-600 to-yellow-500", 
-    letter: "B" 
-  },
-  { 
-    id: "eth", 
-    name: "Ethereum", 
-    symbol: "ETH", 
-    price: 3245.67, 
-    change: 0.8, 
-    color: "bg-blue-600",
-    gradient: "from-blue-600 to-blue-400", 
-    letter: "E" 
-  },
-]
+// This will be replaced with real-time data from useCryptoPrices hook
 
-export default function CryptoConverter() {
+// Wrapper component for the crypto converter
+function CryptoConverterWithProvider() {
+  return <CryptoConverterContent />;
+}
+
+// Main component content
+function CryptoConverterContent() {
+  const { prices: cryptoData, loading: pricesLoading, error: pricesError, refreshPrices } = useCryptoPrices()
   const [fromCrypto, setFromCrypto] = useState("xlm")
   const [toCrypto, setToCrypto] = useState("usdc")
-  const [amount, setAmount] = useState("100")
+  const [amount, setAmount] = useState("")
   const [activeTab, setActiveTab] = useState("crypto-to-crypto")
   const [showFromDropdown, setShowFromDropdown] = useState(false)
   const [showToDropdown, setShowToDropdown] = useState(false)
   const [destinationAddress, setDestinationAddress] = useState("")
   const [memo, setMemo] = useState("")
-  const [tempPrivateKey, setTempPrivateKey] = useState("") // Temporary input field only
+  const [tempPrivateKey, setTempPrivateKey] = useState("")
   const [showSecurityWarnings, setShowSecurityWarnings] = useState(false)
   const [showPrivateKey, setShowPrivateKey] = useState(false)
   const [privateKeyError, setPrivateKeyError] = useState<string | null>(null)
   const [conversionError, setConversionError] = useState<string | null>(null)
   
-  // Use secure key context instead of storing in component state
-  const {
-    setPrivateKey,
-    hasPrivateKey,
-    clearPrivateKey,
-    getSecurityWarnings,
-    withPrivateKey
-  } = useSecureKey()
+  // Simplified secure key handling without the provider
+  const [hasPrivateKeyState, setHasPrivateKeyState] = useState(false);
+  const [privateKey, setPrivateKeyState] = useState<string | null>(null);
+  
+  const setPrivateKey = (key: string) => {
+    setPrivateKeyState(key);
+    setHasPrivateKeyState(true);
+  };
+  
+  const hasPrivateKey = () => hasPrivateKeyState;
+  
+  const clearPrivateKey = () => {
+    setPrivateKeyState(null);
+    setHasPrivateKeyState(false);
+  };
+  
+  const getSecurityWarnings = () => [
+    '🔒 Private keys stored as strings cannot be securely wiped from memory',
+    '⚠️ Only enter private keys in secure, trusted environments',
+    '🕒 Keys are automatically cleared after 5 minutes of inactivity',
+    '🔍 Avoid using browser development tools with real private keys',
+    '💻 Memory dumps may expose private key data until garbage collection',
+    '🏦 Consider hardware wallets for production environments',
+    '🔄 Regularly rotate your private keys for enhanced security'
+  ];
+  
+  const withPrivateKey = <T,>(callback: (key: string) => T): T | null => {
+    if (!hasPrivateKeyState || !privateKey) {
+      return null;
+    }
+    return callback(privateKey);
+  };
   
   // Use the Stellar conversion hook with secure key access
   // Default slippage tolerance is 5% (0.05) - can be customized by passing a parameter
@@ -95,7 +93,22 @@ export default function CryptoConverter() {
   } = useStellarConversion() // or useStellarConversion(0.03) for 3% slippage tolerance
 
   const getTokenById = (id: string) => {
-    return cryptoData.find((crypto) => crypto.id === id) || cryptoData[0]
+    const found = cryptoData.find((crypto) => crypto.id === id);
+    if (found) return found;
+    
+    // Fallback with default values if cryptoData is empty or not found
+    const fallbackData = {
+      id: id,
+      name: id === 'xlm' ? 'Stellar Lumens' : id === 'usdc' ? 'USD Coin' : id === 'btc' ? 'Bitcoin' : 'Ethereum',
+      symbol: id.toUpperCase(),
+      price: id === 'xlm' ? 0.39 : id === 'usdc' ? 1.0 : id === 'btc' ? 68245.12 : 3245.67,
+      change24h: 0,
+      color: 'bg-blue-500',
+      gradient: id === 'xlm' ? 'from-blue-500 to-indigo-600' : id === 'usdc' ? 'from-blue-500 to-cyan-400' : id === 'btc' ? 'from-purple-600 to-yellow-500' : 'from-blue-600 to-blue-400',
+      letter: id.charAt(0).toUpperCase()
+    };
+    
+    return cryptoData.length > 0 ? cryptoData[0] : fallbackData;
   }
 
   // Fetch live exchange rates when inputs change
@@ -248,6 +261,35 @@ export default function CryptoConverter() {
   const fromCryptoData = getTokenById(fromCrypto)
   const toCryptoData = getTokenById(toCrypto)
 
+  // Show loading state while prices are being fetched
+  if (pricesLoading && cryptoData.length === 0) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                <p className="text-gray-400">Loading crypto prices...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-6">
+          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-6 bg-gray-700 rounded w-3/4"></div>
+              <div className="space-y-2">
+                <div className="h-4 bg-gray-700 rounded"></div>
+                <div className="h-4 bg-gray-700 rounded w-5/6"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
@@ -360,9 +402,9 @@ export default function CryptoConverter() {
                     <span className="text-gray-400">
                       1 {fromCryptoData.symbol} = ${fromCryptoData.price.toFixed(2)}
                     </span>
-                    <span className={fromCryptoData.change >= 0 ? "text-green-500" : "text-red-500"}>
-                      {fromCryptoData.change >= 0 ? "+" : ""}
-                      {fromCryptoData.change}%
+                    <span className={fromCryptoData.change24h >= 0 ? "text-green-500" : "text-red-500"}>
+                      {fromCryptoData.change24h >= 0 ? "+" : ""}
+                      {fromCryptoData.change24h}%
                     </span>
                   </div>
                 </div>
@@ -436,9 +478,9 @@ export default function CryptoConverter() {
                     <span className="text-gray-400">
                       1 {toCryptoData.symbol} = ${toCryptoData.price.toFixed(2)}
                     </span>
-                    <span className={toCryptoData.change >= 0 ? "text-green-500" : "text-red-500"}>
-                      {toCryptoData.change >= 0 ? "+" : ""}
-                      {toCryptoData.change}%
+                    <span className={toCryptoData.change24h >= 0 ? "text-green-500" : "text-red-500"}>
+                      {toCryptoData.change24h >= 0 ? "+" : ""}
+                      {toCryptoData.change24h}%
                     </span>
                   </div>
                 </div>
@@ -756,10 +798,12 @@ export default function CryptoConverter() {
       </div>
 
       <div className="space-y-6">
-        <MarketOverview cryptoData={cryptoData} />
+                      <MarketOverview />
         <ConversionHistory />
         <ConversionTips />
       </div>
     </div>
   )
 }
+
+export default CryptoConverterWithProvider

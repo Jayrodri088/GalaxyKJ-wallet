@@ -52,15 +52,12 @@ export class OfflineManager {
           
           // Store for pending transactions
           if (!db.objectStoreNames.contains('transactions')) {
-            const transactionStore = db.createObjectStore('transactions', { keyPath: 'id' });
-            transactionStore.createIndex('status', 'status');
-            transactionStore.createIndex('timestamp', 'timestamp');
+            db.createObjectStore('transactions', { keyPath: 'id' });
           }
           
           // Store for cache
           if (!db.objectStoreNames.contains('cache')) {
-            const cacheStore = db.createObjectStore('cache');
-            cacheStore.createIndex('timestamp', 'timestamp');
+            db.createObjectStore('cache');
           }
         },
       });
@@ -170,9 +167,8 @@ export class OfflineManager {
     if (!this.db) return [];
 
     try {
-      const transactionStore = this.db.transaction('transactions').store;
-      const index = transactionStore.index('status');
-      return await index.getAll('pending');
+      const transactions = await this.db.getAll('transactions');
+      return transactions.filter(t => t.status === 'pending');
     } catch (error) {
       console.error('OfflineManager: Failed to get pending transactions', error);
       return [];
@@ -236,18 +232,13 @@ export class OfflineManager {
     if (!this.db) return;
 
     try {
-      const transaction = this.db.transaction('cache', 'readwrite');
-      const store = transaction.objectStore('cache');
-      const index = store.index('timestamp');
+      const cacheEntries = await this.db.getAll('cache');
       const now = Date.now();
 
-      let cursor = await index.openCursor();
-      while (cursor) {
-        const cacheEntry = cursor.value;
+      for (const [key, cacheEntry] of Object.entries(cacheEntries)) {
         if (now - cacheEntry.timestamp > cacheEntry.ttl) {
-          await cursor.delete();
+          await this.db.delete('cache', key);
         }
-        cursor = await cursor.continue();
       }
     } catch (error) {
       console.error('OfflineManager: Failed to clean expired cache', error);

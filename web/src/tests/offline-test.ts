@@ -126,7 +126,7 @@ export async function testTransactionQueue(): Promise<boolean> {
     await offlineManager.queueTransaction(testTransaction);
     
     // Test getting queued transactions
-    const queuedTransactions = await offlineManager.getQueuedTransactions();
+    const queuedTransactions = await offlineManager.getPendingTransactions();
     const foundTransaction = queuedTransactions.find(tx => tx.id === testTransaction.id);
     
     if (foundTransaction) {

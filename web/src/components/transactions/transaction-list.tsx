@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight, ArrowDownLeft, RefreshCw, Filter } from "lucide-react";
 import { fetchTransactions } from "@/lib/stellar/transactions";
+import { useWalletStore } from "@/store/wallet-store";
 
 type TransactionType = "receive" | "send" | "swap";
 type TransactionStatus = "completed" | "pending" | "failed";
@@ -25,18 +26,29 @@ type Transaction = {
   status: TransactionStatus;
 };
 
+// Helper function to validate Stellar public key
+const isValidStellarPublicKey = (key: string): boolean => {
+  return Boolean(key && key.length === 56 && key.startsWith('G'));
+};
+
 export function TransactionHistory() {
-  const publicKey = "GAFGGL7IZTHXC6REXWCIZYS7L547XY63R5JUCOKSZNXO6SMQBSLUWLTV";
+  const publicKey = useWalletStore((state) => state.publicKey);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | TransactionType>("all");
   const router = useRouter();
 
   useEffect(() => {
     const loadTransactions = async () => {
+      // Validate public key before making API calls
+      if (!publicKey || !isValidStellarPublicKey(publicKey)) {
+        console.log('No valid public key available, skipping transaction fetch');
+        setTransactions([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
@@ -56,9 +68,9 @@ export function TransactionHistory() {
       }
     };
 
-    if (publicKey) {
-      loadTransactions();
-    }
+    // Add a small delay to prevent rapid successive calls
+    const timeoutId = setTimeout(loadTransactions, 100);
+    return () => clearTimeout(timeoutId);
   }, [publicKey]);
 
   const filteredTransactions =
@@ -105,6 +117,26 @@ export function TransactionHistory() {
         return "bg-gray-600 bg-opacity-20 text-gray-400";
     }
   };
+
+  // Show message when no wallet is connected
+  if (!publicKey || !isValidStellarPublicKey(publicKey)) {
+    return (
+      <Card className="bg-[#0F1225] border-gray-800">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-medium text-gray-300">
+            Transaction History
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pb-4">
+          <div className="text-center py-8">
+            <p className="text-gray-500 text-sm">
+              Connect a wallet to view transaction history
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-[#0F1225] border-gray-800">

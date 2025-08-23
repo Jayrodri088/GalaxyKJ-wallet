@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { useWalletStore } from '@/store/wallet-store';
 
 export interface UseWalletSyncOptions {
@@ -24,64 +24,84 @@ export function useWalletSync(options: UseWalletSyncOptions = {}) {
     initialize,
   } = useWalletStore();
 
-  // Manual sync function
+  // Local state to track sync operations
+  const [isSyncing, setIsSyncing] = useState(false);
+  
+  // Use refs to store the latest callbacks
+  const onSyncSuccessRef = useRef(onSyncSuccess);
+  const onSyncErrorRef = useRef(onSyncError);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSyncRef = useRef<number>(0);
+  const syncInProgressRef = useRef(false);
+  
+  // Update refs when callbacks change
+  useEffect(() => {
+    onSyncSuccessRef.current = onSyncSuccess;
+    onSyncErrorRef.current = onSyncError;
+  }, [onSyncSuccess, onSyncError]);
+
+  // Manual sync function - stable reference with protection against simultaneous calls
   const manualSync = useCallback(async () => {
-    if (!publicKey || connectionStatus.isLoading) {
+    if (syncInProgressRef.current) {
       return;
     }
 
+    const now = Date.now();
+    if (now - lastSyncRef.current < 2000) {
+      return;
+    }
+
+    syncInProgressRef.current = true;
+    lastSyncRef.current = now;
+
     try {
       await syncWallet();
-      onSyncSuccess?.();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Sync failed';
-      onSyncError?.(errorMessage);
+      console.error('Wallet sync failed:', error);
+    } finally {
+      syncInProgressRef.current = false;
     }
-  }, [publicKey, connectionStatus.isLoading, syncWallet, onSyncSuccess, onSyncError]);
+  }, [syncWallet]);
 
-  // Initialize wallet store on mount
+  // Initialize wallet store on mount - only once
   useEffect(() => {
     if (!isInitialized) {
       initialize();
     }
   }, [isInitialized, initialize]);
 
-  // Auto-sync effect
+  // Auto-sync effect - runs every 30 seconds
   useEffect(() => {
-    if (!autoSync || !publicKey || !isInitialized) {
-      return;
-    }
+    if (!publicKey || !isInitialized) return;
 
-    // Initial sync
-    manualSync();
-
-    // Set up interval for periodic sync
     const interval = setInterval(() => {
-      if (!connectionStatus.isLoading) {
-        manualSync();
-      }
-    }, syncInterval);
+      manualSync();
+    }, 30000);
 
     return () => clearInterval(interval);
-  }, [autoSync, publicKey, isInitialized, syncInterval, manualSync, connectionStatus.isLoading]);
+  }, [publicKey, isInitialized, manualSync]);
 
-  // Sync when network reconnects
+  // Initial sync on mount
   useEffect(() => {
-    const handleOnline = () => {
-      if (publicKey && !connectionStatus.isLoading) {
-        manualSync();
+    if (publicKey && isInitialized) {
+      manualSync();
+    }
+  }, [publicKey, isInitialized, manualSync]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
       }
     };
-
-    window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
-  }, [publicKey, connectionStatus.isLoading, manualSync]);
+  }, []);
 
   return {
+    isSyncing: syncInProgressRef.current,
+    connectionStatus,
     sync: manualSync,
-    isLoading: connectionStatus.isLoading,
-    isConnected: connectionStatus.isConnected,
-    lastSyncTime: connectionStatus.lastSyncTime,
-    error: connectionStatus.error,
+    onSyncSuccess,
+    onSyncError
   };
 }

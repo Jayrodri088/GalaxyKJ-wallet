@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/globals.css";
 import { StarBackground } from "@/components/effects/star-background";
 import { LanguageProvider } from "@/contexts/language-provider";
+import { SecureKeyProvider } from "@/contexts/secure-key-context";
 import { OfflineStatusToast } from "@/components/ui/offline-indicator";
 import { registerServiceWorker } from "@/lib/register-sw";
 import { AnalyticsProvider } from "@/components/ui/analytics-provider";
@@ -44,14 +45,16 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <ErrorBoundary>
-          <AnalyticsProvider>
-            <LanguageProvider>
-              <StarBackground />
-              <main className="relative z-10">{children}</main>
-              <OfflineStatusToast />
-              <PrivacyConsentBanner />
-            </LanguageProvider>
-          </AnalyticsProvider>
+          <SecureKeyProvider>
+            <AnalyticsProvider>
+              <LanguageProvider>
+                <StarBackground />
+                <main className="relative z-10">{children}</main>
+                <OfflineStatusToast />
+                <PrivacyConsentBanner />
+              </LanguageProvider>
+            </AnalyticsProvider>
+          </SecureKeyProvider>
         </ErrorBoundary>
       </body>
     </html>

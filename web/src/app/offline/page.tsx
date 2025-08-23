@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useOffline } from '../../hooks/use-offline';
-import { OfflineIndicator } from '../../components/ui/offline-indicator';
+// import { OfflineIndicator } from '../../components/ui/offline-indicator';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { 

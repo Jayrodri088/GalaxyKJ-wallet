@@ -34,7 +34,7 @@ export default function TestOfflinePage() {
             <div>
               <h3 className="font-medium text-white mb-2">1. Automated Tests</h3>
               <ul className="text-sm text-gray-300 space-y-1">
-                <li>• Click "Run All Tests" above</li>
+                <li>• Click &quot;Run All Tests&quot; above</li>
                 <li>• Check console for detailed results</li>
                 <li>• Verify Service Worker registration</li>
                 <li>• Test IndexedDB functionality</li>
@@ -47,7 +47,7 @@ export default function TestOfflinePage() {
               <ul className="text-sm text-gray-300 space-y-1">
                 <li>• Open DevTools (F12)</li>
                 <li>• Go to Network tab</li>
-                <li>• Check "Offline" checkbox</li>
+                <li>• Check &quot;Offline&quot; checkbox</li>
                 <li>• Refresh page</li>
                 <li>• Look for offline indicators</li>
               </ul>

@@ -195,12 +195,18 @@ export async function decryptPrivateKey(encryptedStr: string, password: string):
   let passwordBytes: Uint8Array | null = null
 
   try {
+    console.log("Starting decryption process...")
     const encrypted = JSON.parse(encryptedStr)
-    const salt = new Uint8Array(encrypted.salt)
-    const iv = new Uint8Array(encrypted.iv)
-    const data = new Uint8Array(encrypted.ciphertext)
+    console.log("JSON parsed successfully")
+    
+    const salt = new Uint8Array(encrypted.salt as number[])
+    const iv = new Uint8Array(encrypted.iv as number[])
+    const data = new Uint8Array(encrypted.ciphertext as number[])
+    console.log("Encrypted data extracted:", { saltLength: salt.length, ivLength: iv.length, dataLength: data.length })
 
     passwordBytes = enc.encode(password)
+    console.log("Password encoded")
+    console.log("Importing key material...")
     keyMaterial = await window.crypto.subtle.importKey(
       "raw",
       passwordBytes,
@@ -208,7 +214,9 @@ export async function decryptPrivateKey(encryptedStr: string, password: string):
       false,
       ["deriveKey"]
     )
+    console.log("Key material imported successfully")
 
+    console.log("Deriving key...")
     derivedKey = await window.crypto.subtle.deriveKey(
       {
         name: "PBKDF2",
@@ -221,14 +229,19 @@ export async function decryptPrivateKey(encryptedStr: string, password: string):
       false,
       ["decrypt"]
     )
+    console.log("Key derived successfully")
 
+    console.log("Attempting to decrypt data...")
     decrypted = await window.crypto.subtle.decrypt(
       { name: "AES-GCM", iv },
       derivedKey,
       data
     )
+    console.log("Data decrypted successfully")
 
-    return dec.decode(decrypted)
+    const result = dec.decode(decrypted)
+    console.log("Result decoded successfully")
+    return result
   } finally {
     // NOTE: These buffer clearing operations provide limited security benefit
     // because the original password string parameter remains in memory as

@@ -4,7 +4,7 @@ import PortfolioOverview from "@/components/portfolio-overview";
 import { Calendar, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { motion } from 'framer-motion';
-import AssetDistribution from "@/components/asset-distribution";
+import { AssetDistribution } from "@/components/asset-distribution";
 import PerformanceComparison from "@/components/performance-comparison";
 import RebalancingSuggestions from "@/components/rebalancing-suggestions";
 import RiskAnalysis from "@/components/risk-analysis";

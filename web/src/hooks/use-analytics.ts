@@ -44,12 +44,9 @@ export function useAnalytics() {
       handleRouteChange(window.location.pathname);
     }
 
-    // Listen for route changes
-    router.events?.on('routeChangeComplete', handleRouteChange);
-
-    return () => {
-      router.events?.off('routeChangeComplete', handleRouteChange);
-    };
+    // In App Router, we need to use a different approach for route change tracking
+    // For now, we'll just track the initial page view
+    // TODO: Implement proper route change tracking for App Router
   }, [router]);
 
   /**

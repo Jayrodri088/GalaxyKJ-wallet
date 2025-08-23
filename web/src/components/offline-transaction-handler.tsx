@@ -45,15 +45,31 @@ export function OfflineTransactionHandler() {
 
     try {
       const response = await sendTransactionOffline(transactionData);
-      setResult(response);
       
+      // Transform the response to match the expected format
       if (response.success) {
+        setResult({
+          success: true,
+          message: 'Transacción enviada exitosamente'
+        });
         // Limpiar formulario si fue exitoso
         setTransactionData({
           to: '',
           amount: '',
           asset: 'XLM',
           memo: ''
+        });
+      } else if (response.queued) {
+        setResult({
+          success: false,
+          message: 'Transacción agregada a la cola offline',
+          queued: true,
+          transactionId: response.transactionId
+        });
+      } else {
+        setResult({
+          success: false,
+          message: 'Error al procesar la transacción'
         });
       }
     } catch (error) {

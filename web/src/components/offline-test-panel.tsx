@@ -46,7 +46,7 @@ export function OfflineTestPanel() {
 
   const simulateOffline = () => {
     // This is a manual test - user needs to use DevTools
-    alert('To test offline mode:\n1. Open DevTools (F12)\n2. Go to Network tab\n3. Check "Offline" checkbox\n4. Refresh the page');
+    alert('To test offline mode:\n1. Open DevTools (F12)\n2. Go to Network tab\n3. Check &quot;Offline&quot; checkbox\n4. Refresh the page');
   };
 
   return (
@@ -118,10 +118,10 @@ export function OfflineTestPanel() {
           <ol className="list-decimal list-inside space-y-1">
             <li>Open DevTools (F12)</li>
             <li>Go to Network tab</li>
-            <li>Check "Offline" checkbox</li>
+            <li>Check &quot;Offline&quot; checkbox</li>
             <li>Refresh the page</li>
             <li>Look for offline banner and indicators</li>
-            <li>Uncheck "Offline" to test reconnection</li>
+            <li>Uncheck &quot;Offline&quot; to test reconnection</li>
           </ol>
         </div>
       </div>

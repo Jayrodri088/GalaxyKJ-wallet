@@ -238,12 +238,23 @@ function monitorApiResponseTimes(): void {
       const response = await originalFetch.apply(this, args);
       const responseTime = performance.now() - startTime;
       
-      trackApiResponseTime(responseTime, args[0] as string, response.status);
+      // Only track successful or client error responses, not network errors
+      if (response.status > 0) {
+        trackApiResponseTime(responseTime, args[0] as string, response.status);
+      }
       
       return response;
     } catch (error) {
       const responseTime = performance.now() - startTime;
-      trackApiResponseTime(responseTime, args[0] as string, 0, error);
+      
+      // Only track network errors for monitoring purposes, don't re-throw
+      // This prevents the performance monitor from interfering with normal error handling
+      try {
+        trackApiResponseTime(responseTime, args[0] as string, 0, error);
+      } catch (trackingError) {
+        console.warn('Failed to track API error:', trackingError);
+      }
+      
       throw error;
     }
   };

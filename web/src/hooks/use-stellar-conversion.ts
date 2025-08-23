@@ -155,6 +155,13 @@ export function useStellarConversion(slippageTolerance: number = 0.05) {
     updateState({ currentAssetPair: { fromAssetId, toAssetId } });
 
     try {
+      // Check network connectivity first
+      const networkStatus = await stellarConversionService.checkNetworkConnectivity();
+      if (!networkStatus.connected) {
+        console.warn("Network connectivity issue:", networkStatus.error);
+        return;
+      }
+
       const orderBook = await stellarConversionService.getOrderBook(
         sourceAsset,
         destinationAsset,
@@ -230,12 +237,40 @@ export function useStellarConversion(slippageTolerance: number = 0.05) {
     return () => clearInterval(interval);
   }, [state.estimate, state.loading, state.currentAssetPair, fetchOrderBook]);
 
+  // Check network connectivity
+  const checkNetworkStatus = useCallback(async () => {
+    try {
+      return await stellarConversionService.checkNetworkConnectivity();
+    } catch (error) {
+      return { 
+        connected: false, 
+        error: "Failed to check network status" 
+      };
+    }
+  }, []);
+
+  // Run comprehensive network diagnostic
+  const runNetworkDiagnostic = useCallback(async () => {
+    try {
+      return await stellarConversionService.runNetworkDiagnostic();
+    } catch (error) {
+      console.error('Failed to run network diagnostic:', error);
+      return {
+        overallStatus: 'unhealthy' as const,
+        tests: [],
+        summary: 'Failed to run diagnostic'
+      };
+    }
+  }, []);
+
   return {
     ...state,
     getEstimate,
     checkTrustlines,
     fetchOrderBook,
     executeConversion,
+    checkNetworkStatus,
+    runNetworkDiagnostic,
     clearError,
     clearResult,
     assets: STELLAR_ASSETS

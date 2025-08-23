@@ -68,6 +68,28 @@ The **Invisible Wallets** system eliminates the complexity of managing Stellar b
    - Self-diagnosis checklist
    - Error reporting templates
 
+### 🔄 Recent Implementations
+
+#### Real-Time Data Integration
+
+11. **[Implementation Summary](./IMPLEMENTATION_SUMMARY.md)**
+   - Complete overview of all recent implementations
+   - Technical architecture and system design
+   - Performance optimizations and security considerations
+   - Future enhancements and roadmap
+
+12. **[Crypto Prices Implementation](./CRYPTO_PRICES_IMPLEMENTATION.md)**
+   - Multi-source real-time pricing system
+   - API proxy architecture and caching strategy
+   - Error handling and fallback mechanisms
+   - Performance optimizations and monitoring
+
+13. **[Conversion History Implementation](./CONVERSION_HISTORY_IMPLEMENTATION.md)**
+   - Real-time wallet transaction processing
+   - Live conversion history from Stellar wallet
+   - Transaction type support and data formatting
+   - UI states and error handling
+
 ## 🎯 Key Features
 
 ### ✨ Invisible Wallets Highlights

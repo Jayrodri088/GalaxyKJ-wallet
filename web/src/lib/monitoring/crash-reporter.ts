@@ -100,12 +100,13 @@ function setupResourceErrorCapture(): void {
     // Check if it's a resource loading error
     if (event.target && event.target !== window) {
       const target = event.target as HTMLElement;
-      const error = new Error(`Resource loading failed: ${target.tagName} ${target.src || target.href}`);
+      const src = (target as HTMLImageElement).src || (target as HTMLAnchorElement).href || '';
+      const error = new Error(`Resource loading failed: ${target.tagName} ${src}`);
       
       const errorReport = createErrorReport(error, {
         type: 'resource_error',
         tagName: target.tagName,
-        src: target.src || target.href,
+        src: src,
         url: window.location.href
       });
 
@@ -120,16 +121,22 @@ function setupResourceErrorCapture(): void {
  */
 function reportCrash(errorReport: ErrorReport): void {
   try {
+    // Validate error report
+    if (!errorReport || !errorReport.error) {
+      console.warn('Invalid error report received:', errorReport);
+      return;
+    }
+
     // Add breadcrumb for crash
     addBreadcrumb({
-      message: `Crash detected: ${errorReport.error.message}`,
+      message: `Crash detected: ${errorReport.error.message || 'Unknown error'}`,
       level: 'error',
-      category: 'crash',
+      category: 'ui',
       timestamp: Date.now(),
       data: {
-        errorType: errorReport.error.name,
-        errorMessage: errorReport.error.message,
-        severity: errorReport.severity
+        errorType: errorReport.error.name || 'Unknown',
+        errorMessage: errorReport.error.message || 'Unknown error',
+        severity: errorReport.severity || 'medium'
       }
     });
 
@@ -137,7 +144,7 @@ function reportCrash(errorReport: ErrorReport): void {
     if (CRASH_REPORTER_CONFIG.reportToAnalytics) {
       trackAnalyticsError(errorReport.error, {
         type: 'crash',
-        severity: errorReport.severity,
+        severity: errorReport.severity || 'medium',
         category: categorizeError(errorReport.error),
         ...errorReport.context
       });
@@ -145,13 +152,18 @@ function reportCrash(errorReport: ErrorReport): void {
 
     // Report to Sentry
     if (CRASH_REPORTER_CONFIG.reportToSentry) {
-      const severity = mapSeverityToSentry(errorReport.severity);
-      captureError(errorReport.error, errorReport.context, severity);
+      const severity = mapSeverityToSentry(errorReport.severity || 'medium');
+      captureError(errorReport.error, errorReport.context || {}, severity);
     }
 
     // Log crash in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('Crash detected:', errorReport);
+      console.error('Crash detected:', {
+        error: errorReport.error.message,
+        type: errorReport.error.name,
+        severity: errorReport.severity,
+        context: errorReport.context
+      });
     }
   } catch (reportingError) {
     console.error('Failed to report crash:', reportingError);
@@ -239,7 +251,7 @@ export function addCrashBreadcrumb(message: string, data?: Record<string, any>):
   addBreadcrumb({
     message,
     level: 'info',
-    category: 'crash',
+    category: 'ui',
     timestamp: Date.now(),
     data
   });

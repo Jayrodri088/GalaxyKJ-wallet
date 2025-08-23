@@ -24,7 +24,8 @@ Sentry.init({
 
     if (event.user) {
       // Anonymize user data
-      event.user.id = `user_${event.user.id?.substring(0, 8)}...`;
+      const userId = String(event.user.id || '');
+      event.user.id = `user_${userId.substring(0, 8)}...`;
     }
 
     // Remove sensitive data from extra fields
@@ -45,7 +46,9 @@ Sentry.init({
       ];
 
       sensitiveKeys.forEach(key => {
-        delete event.extra[key];
+        if (event.extra) {
+          delete event.extra[key];
+        }
       });
     }
 
@@ -71,7 +74,9 @@ Sentry.init({
       ];
 
       sensitiveKeys.forEach(key => {
-        delete breadcrumb.data[key];
+        if (breadcrumb.data) {
+          delete breadcrumb.data[key];
+        }
       });
     }
 

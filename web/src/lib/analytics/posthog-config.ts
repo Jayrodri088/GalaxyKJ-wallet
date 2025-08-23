@@ -23,7 +23,7 @@ const POSTHOG_CONFIG = {
   disable_session_recording: true, // Disable session recording for privacy
   opt_out_capturing_by_default: true, // Opt out by default, require explicit consent
   respect_dnt: true, // Respect Do Not Track headers
-  persistence: 'localStorage', // Use localStorage for persistence
+  persistence: 'localStorage' as const, // Use localStorage for persistence
   cross_subdomain_cookie: false, // Don't set cross-subdomain cookies
   secure_cookie: true, // Use secure cookies in production
   property_blacklist: [
@@ -97,7 +97,10 @@ function shouldEnablePostHog(
 
   // Check if PostHog key is configured
   if (!config.posthogKey) {
-    console.warn('PostHog key not configured');
+    // Only log warning in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('PostHog not configured - analytics disabled');
+    }
     return false;
   }
 
@@ -127,7 +130,10 @@ export function trackEvent(
   privacySettings: PrivacySettings
 ): void {
   if (!posthog.isFeatureEnabled('test')) {
-    console.warn('PostHog not initialized, event not tracked:', event);
+    // Only log warning in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('PostHog not initialized, event not tracked:', event);
+    }
     return;
   }
 
@@ -256,7 +262,7 @@ export function getPostHog(): typeof posthog | null {
  * @returns Whether PostHog is initialized
  */
 export function isPostHogInitialized(): boolean {
-  return posthog.isFeatureEnabled('test');
+  return posthog.isFeatureEnabled('test') ?? false;
 }
 
 /**

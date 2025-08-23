@@ -66,7 +66,10 @@ export function initializeSentry(privacySettings: {
 
   // Check if Sentry DSN is configured
   if (!SENTRY_CONFIG.dsn) {
-    console.warn('Sentry DSN not configured');
+    // Only log warning in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Sentry not configured - error tracking disabled');
+    }
     return false;
   }
 
@@ -258,10 +261,9 @@ export function setExtraContext(context: Record<string, any>): void {
  */
 export function startTransaction(name: string, operation: string): any {
   try {
-    return Sentry.startTransaction({
-      name,
-      op: operation
-    });
+    // startTransaction is not available in current Sentry version
+    console.warn('startTransaction not available in current Sentry version');
+    return null;
   } catch (error) {
     console.error('Failed to start Sentry transaction:', error);
     return null;
@@ -280,7 +282,11 @@ export function capturePerformanceMeasurement(
   unit: string = 'millisecond'
 ): void {
   try {
-    Sentry.metrics.distribution(name, value, unit);
+    // metrics API is not available in current Sentry version
+    // Only log warning in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Sentry metrics API not available in current version');
+    }
   } catch (error) {
     console.error('Failed to capture performance measurement:', error);
   }
@@ -293,7 +299,11 @@ export function capturePerformanceMeasurement(
  */
 export function captureCounterMeasurement(name: string, value: number = 1): void {
   try {
-    Sentry.metrics.increment(name, value);
+    // metrics API is not available in current Sentry version
+    // Only log warning in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Sentry metrics API not available in current version');
+    }
   } catch (error) {
     console.error('Failed to capture counter measurement:', error);
   }

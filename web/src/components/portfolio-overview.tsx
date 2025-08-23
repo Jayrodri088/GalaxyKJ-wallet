@@ -1,111 +1,181 @@
+"use client";
 
-
-
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useWalletStore } from "@/store/wallet-store";
+import { useCryptoPrices } from "@/hooks/use-crypto-prices";
+import { Line } from "react-chartjs-2";
 import {
-    Chart as ChartJS,
-    LineElement,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    Tooltip,
-    Legend,
-  } from 'chart.js';
-  import { Line } from 'react-chartjs-2';
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from "chart.js";
 
-  ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
-
-
-
-
-interface portfolioCardValuesProps {
-    heading: string;
-    value: number;
-}
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 export default function PortfolioOverview() {
+  const { balance, connectionStatus } = useWalletStore();
+  const { getPrice } = useCryptoPrices();
 
+  // Get real asset data
+  const xlmBalance = balance?.xlm?.balance ? parseFloat(balance.xlm.balance) : 0;
+  const assetBalances = balance?.assets || [];
+  
+  // Calculate values using real-time prices
+  const xlmPrice = getPrice("XLM");
+  const xlmValue = xlmBalance * xlmPrice;
+  const assetValues = assetBalances.map(asset => {
+    const assetPrice = getPrice(asset.asset.code);
+    return parseFloat(asset.balance) * assetPrice;
+  });
+  const totalValue = xlmValue + assetValues.reduce((sum, value) => sum + value, 0);
 
-       const portFolioCardValues : portfolioCardValuesProps[] = [
-            {
-                heading: "Total Value",
-                value: 12458.32,
-            },
-            {
-                heading: "24h Change",
-                value: 2.3,
-            },
-            {
-                heading: "30d Change",
-                value: 5.8,
-            },
-            {
-                heading: "All Time",
-                value: 24.7,
-            }
-        ]
+  // Portfolio card values
+  const portFolioCardValues = {
+    totalValue: totalValue,
+    change24h: totalValue * 0.025, // Simulated 2.5% change
+    change30d: totalValue * 0.08, // Simulated 8% change
+    allTime: totalValue * 0.15, // Simulated 15% change
+  };
 
+  // Generate chart data based on real total value
+  const lineChartData = {
+    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+    datasets: [
+      {
+        label: "Portfolio Value",
+        data: [
+          totalValue * 0.85, // Simulated historical data
+          totalValue * 0.88,
+          totalValue * 0.92,
+          totalValue * 0.89,
+          totalValue * 0.95,
+          totalValue * 0.98,
+          totalValue, // Current value
+        ],
+        borderColor: "#8b5cf6",
+        backgroundColor: "rgba(139, 92, 246, 0.1)",
+        tension: 0.4,
+        fill: true,
+      },
+    ],
+  };
 
-        const lineChartData = {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-            datasets: [
-              {
-                label: 'Portfolio Value',
-                data: [8000, 9500, 10400, 11500, 12458.32],
-                borderColor: '#4ADD80',
-                backgroundColor: 'rgba(74, 221, 128, 0.2)',
-                tension: 0.4,
-                fill: true,
-              },
-            ],
-          };
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: "rgba(17, 24, 39, 0.9)",
+        titleColor: "#fff",
+        bodyColor: "#e5e7eb",
+        borderColor: "#374151",
+        borderWidth: 1,
+        callbacks: {
+          label: (context: any) => {
+            return `$${context.parsed.y.toFixed(2)}`;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        border: {
+          display: false,
+        },
+        grid: {
+          color: "rgba(75, 85, 99, 0.2)",
+        },
+        ticks: {
+          color: "#9ca3af",
+        },
+      },
+      y: {
+        border: {
+          display: false,
+        },
+        grid: {
+          color: "rgba(75, 85, 99, 0.2)",
+        },
+        ticks: {
+          color: "#9ca3af",
+        },
+      },
+    },
+  };
 
-          const lineChartOptions = {
-            responsive: true,
-            plugins: {
-              legend: {
-                labels: {
-                  color: '#A0AEC0',
-                },
-              },
-            },
-            scales: {
-              x: {
-                ticks: { color: '#A0AEC0' },
-                grid: { color: '#2D3748' },
-              },
-              y: {
-                ticks: { color: '#A0AEC0' },
-                grid: { color: '#2D3748' },
-              },
-            },
-          };
+  const isLoading = connectionStatus.isLoading;
 
+  return (
+    <Card className="border-gray-800 bg-gray-900/50">
+      <CardHeader>
+        <CardTitle className="text-lg font-medium text-gray-300">
+          Portfolio Overview
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-center py-8 text-gray-400">
+            Loading portfolio...
+          </div>
+        ) : totalValue === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            No portfolio data available
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Portfolio Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-white">
+                  ${portFolioCardValues.totalValue.toFixed(2)}
+                </p>
+                <p className="text-sm text-gray-400">Total Value</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-semibold text-green-400">
+                  +${portFolioCardValues.change24h.toFixed(2)}
+                </p>
+                <p className="text-sm text-gray-400">24h Change</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-semibold text-green-400">
+                  +${portFolioCardValues.change30d.toFixed(2)}
+                </p>
+                <p className="text-sm text-gray-400">30d Change</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-semibold text-green-400">
+                  +${portFolioCardValues.allTime.toFixed(2)}
+                </p>
+                <p className="text-sm text-gray-400">All Time</p>
+              </div>
+            </div>
 
-    return (
-        <section className="w-full bg-[#13182B]/50 min-h-[50vh] flex flex-col items-start justify-start gap-5 px-4 py-6 rounded-sm   "  >
-
-       <div>
-        <h1  className="text-2xl text-white font-semibold "> Portfolio Overview </h1>
-        <p  className="text-lg font-medium text-[#626D81]" > Current value: $12,458.32 (+5.8% this month) </p>
-       </div>
-
-       <div className="w-full h-[30vh] lg:h-[50vh] flex items-center justify-center  bg-[#13182B]/90  text-[#6283AD] text-xl font-medium    "  >
-       <Line data={lineChartData} options={lineChartOptions} />
-       </div>
-
-
-       <ul className="w-full flex  flex-wrap items-center  gap-3 " >
-        {portFolioCardValues.map((card, index) => (
-              <li key={index} className=" flex flex-col items-start  h-20 w-full max-w-[240px] justify-center p-2 rounded-lg  bg-[#13182B]/90   "   >
-              <h3 className=" text-[#6283AD] text-lg font-medium "  > {card.heading} </h3>
-              <p className={` text-xl md:text-2xl  text-[#4ADD80] font-semibold ${index === 0 ? "text-white" : " text-[#4ADD80]"}`}     > {index === 0 ? `$ ${card.value}`: `${card.value}%` } </p>
-                      </li>
-        ))}
-
-       </ul>
-
-
-
-        </section>
-    )
+            {/* Chart */}
+            <div className="h-64">
+              <Line data={lineChartData} options={chartOptions} />
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }

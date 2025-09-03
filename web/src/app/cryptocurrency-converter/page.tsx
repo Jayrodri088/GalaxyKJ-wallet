@@ -19,7 +19,7 @@ export default function Home() {
       <main className="relative z-10 min-h-screen pt-8">
         <div className="max-w-7xl mx-auto">
           <header className="mb-6 flex items-center gap-3">
-            <Link href="/" className="text-gray-500 hover:text-gray-400 transition-colors">
+            <Link href="/dashboard" className="text-gray-500 hover:text-gray-400 transition-colors">
               <ArrowLeft className="h-6 w-6" />
             </Link>
             <div>

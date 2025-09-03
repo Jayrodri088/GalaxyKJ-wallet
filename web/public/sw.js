@@ -1,5 +1,5 @@
-const CACHE_NAME = 'galaxy-wallet-v1';
-const OFFLINE_CACHE = 'galaxy-wallet-offline-v1';
+const CACHE_NAME = 'galaxy-wallet-v3';
+const OFFLINE_CACHE = 'galaxy-wallet-offline-v3';
 const TRANSACTION_QUEUE_KEY = 'transaction-queue';
 
 // Files to cache for offline functionality
@@ -65,7 +65,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(handleApiRequest(request));
   } else if (request.method === 'GET') {
     event.respondWith(handleStaticRequest(request));
-  } else if (request.method === 'POST' && url.pathname.includes('transaction')) {
+  } else if (request.method === 'POST' && url.hostname.includes('stellar') && url.pathname.includes('transaction')) {
     event.respondWith(handleTransactionRequest(request));
   }
 });
@@ -122,6 +122,9 @@ async function handleStaticRequest(request) {
 
 // Offline Transaction Handling
 async function handleTransactionRequest(request) {
+  // Clone the request BEFORE using it, to avoid "Request body is already used" error
+  const requestClone = request.clone();
+  
   try {
     // Try to send the transaction
     const response = await fetch(request);
@@ -135,8 +138,35 @@ async function handleTransactionRequest(request) {
     console.log('Service Worker: Transaction failed, queuing for later', error);
   }
 
-  // If it fails, add to queue
-  const transactionData = await request.clone().json();
+  // If it fails, add to queue using the cloned request
+  let transactionData;
+  try {
+    // Try to get the request body as text first (for Stellar transactions)
+    const bodyText = await requestClone.text();
+    
+    // If it looks like JSON, parse it as JSON
+    if (bodyText.trim().startsWith('{') || bodyText.trim().startsWith('[')) {
+      transactionData = JSON.parse(bodyText);
+    } else {
+      // For Stellar transactions (form data like "tx=AAAAAgAA...")
+      transactionData = {
+        url: requestClone.url,
+        method: requestClone.method,
+        headers: Object.fromEntries(requestClone.headers),
+        body: bodyText,
+        timestamp: new Date().toISOString()
+      };
+    }
+  } catch (error) {
+    console.log('Service Worker: Failed to parse transaction data, storing raw request info');
+    transactionData = {
+      url: requestClone.url,
+      method: requestClone.method,
+      timestamp: new Date().toISOString(),
+      error: 'Failed to parse body'
+    };
+  }
+  
   await addToTransactionQueue(transactionData);
 
   return new Response(JSON.stringify({

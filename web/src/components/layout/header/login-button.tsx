@@ -7,6 +7,7 @@ import { GalaxyLogin } from "@/components/login/galaxy-login"
 import { ArrowRight, Wallet } from "lucide-react"
 import { Keypair } from "@stellar/stellar-sdk"
 import { useWalletStore } from "@/store/wallet-store"
+import { useSecureKey } from "@/contexts/secure-key-context"
 
 export function LoginButton() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -14,11 +15,16 @@ export function LoginButton() {
   const [isHovered, setIsHovered] = useState(false)
 
   const setPublicKey = useWalletStore((state) => state.setPublicKey)
+  const { setPrivateKey, hasPrivateKey } = useSecureKey()
 
   const handleLoginSuccess = (decryptedPrivateKey: string) => {
     const keypair = Keypair.fromSecret(decryptedPrivateKey)
     const publicKey = keypair.publicKey()
 
+    // Set the private key in the secure context
+    setPrivateKey(decryptedPrivateKey)
+    
+    // Set the public key in the wallet store
     setPublicKey(publicKey)
     setIsLoggedIn(true)
     setIsLoginModalOpen(false)
@@ -32,6 +38,9 @@ export function LoginButton() {
   const handleClose = () => {
     setIsLoginModalOpen(false)
   }
+
+  // Check if wallet is connected via secure context
+  const isWalletConnected = hasPrivateKey()
 
   return (
     <>
@@ -48,7 +57,7 @@ export function LoginButton() {
         >
           <div className="flex items-center gap-2">
             <Wallet className="h-5 w-5" />
-            <span>{isLoggedIn ? "WALLET CONNECTED" : "LOGIN"}</span>
+            <span>{isWalletConnected ? "WALLET CONNECTED" : "LOGIN"}</span>
             <motion.div animate={{ x: isHovered ? 5 : 0 }} transition={{ duration: 0.2 }}>
               <ArrowRight className="h-5 w-5" />
             </motion.div>

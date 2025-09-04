@@ -4,11 +4,6 @@ import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useScroll } from "framer-motion"
 import { openDB } from "idb"
-
-// Database configuration constants
-const DB_NAME = "wallet-db"
-const STORE_NAME = "encrypted-wallet"
-
 import { StarBackground } from "@/components/effects/star-background"
 import { ShootingStarsEffect } from "@/components/effects/shooting-stars-effect"
 import { Header } from "./header"
@@ -18,6 +13,13 @@ import { CTASection } from "./cta-section"
 import { Footer } from "./footer"
 import { CreateWalletModal } from "@/components/wallet-creation/create-wallet-modal"
 import { GalaxyLogin } from "@/components/login/galaxy-login"
+import { useSecureKey } from "@/contexts/secure-key-context"
+import { useWalletStore } from "@/store/wallet-store"
+import { Keypair } from "@stellar/stellar-sdk"
+
+// Database configuration constants
+const DB_NAME = "wallet-db"
+const STORE_NAME = "encrypted-wallet"
 
 export function WelcomeScreen() {
   const containerRef = useRef(null)
@@ -27,12 +29,24 @@ export function WelcomeScreen() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isCreating] = useState(false)
 
+  const { setPrivateKey } = useSecureKey()
+  const setPublicKey = useWalletStore((state) => state.setPublicKey)
+
   const handleWalletCreated = () => {
     setIsCreateModalOpen(false)
     setIsLoginModalOpen(true)
   }
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (decryptedPrivateKey: string) => {
+    const keypair = Keypair.fromSecret(decryptedPrivateKey)
+    const publicKey = keypair.publicKey()
+
+    // Set the private key in the secure context
+    setPrivateKey(decryptedPrivateKey)
+    
+    // Set the public key in the wallet store
+    setPublicKey(publicKey)
+    
     setIsLoginModalOpen(false)
     router.push("/dashboard")
   }

@@ -72,7 +72,12 @@ export class StellarConversionService {
   constructor() {
     // Configure server with timeout and retry options
     this.server = new StellarSdk.Horizon.Server(STELLAR_CONFIG.horizonURL, {
-      allowHttp: false // Only allow HTTPS
+      allowHttp: false, // Only allow HTTPS
+    });
+    
+    console.log('🌐 Stellar server initialized with config:', {
+      horizonURL: STELLAR_CONFIG.horizonURL,
+      networkPassphrase: STELLAR_CONFIG.networkPassphrase
     });
   }
 
@@ -96,21 +101,72 @@ export class StellarConversionService {
   }
 
   /**
+   * Helper function to add timeout to any promise
+   */
+  private async withTimeout<T>(promise: Promise<T>, timeoutMs: number = 30000): Promise<T> {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error(`Operation timed out after ${timeoutMs}ms`)), timeoutMs);
+    });
+    
+    return Promise.race([promise, timeoutPromise]);
+  }
+
+  /**
    * Retry mechanism for network operations with exponential backoff
    */
   private async withRetry<T>(
     operation: () => Promise<T>,
     operationName: string,
     maxRetries: number = 3,
-    baseDelay: number = 1000
+    baseDelay: number = 1000,
+    timeoutMs: number = 30000
   ): Promise<T> {
     let lastError: Error;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        return await operation();
+        console.log(`🔄 ${operationName} attempt ${attempt + 1}/${maxRetries + 1}`);
+        
+        // Add a small delay between retries to avoid overwhelming the network
+        if (attempt > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        return await this.withTimeout(operation(), timeoutMs);
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        // Enhanced error capture and logging
+        console.log('🔍 Raw error caught:', error);
+        console.log('🔍 Error type:', typeof error);
+        console.log('🔍 Error constructor:', error?.constructor?.name);
+        
+        if (error instanceof Error) {
+          lastError = error;
+        } else if (typeof error === 'string') {
+          lastError = new Error(error);
+        } else if (error && typeof error === 'object') {
+          // Handle AxiosError or other object-like errors
+          const errorObj = error as any;
+          lastError = new Error(errorObj.message || errorObj.error || JSON.stringify(errorObj));
+          // Copy additional properties
+          if (errorObj.response) {
+            console.log('🔍 Response data:', errorObj.response.data);
+            console.log('🔍 Response status:', errorObj.response.status);
+            console.log('🔍 Response headers:', errorObj.response.headers);
+          }
+          if (errorObj.request) {
+            console.log('🔍 Request details:', errorObj.request);
+          }
+          if (errorObj.config) {
+            console.log('🔍 Request config:', {
+              url: errorObj.config.url,
+              method: errorObj.config.method,
+              timeout: errorObj.config.timeout,
+              headers: errorObj.config.headers
+            });
+          }
+        } else {
+          lastError = new Error(String(error));
+        }
         
         // Enhanced error logging for debugging
         console.error(`🔴 ${operationName} attempt ${attempt + 1} failed:`, {
@@ -120,14 +176,16 @@ export class StellarConversionService {
           operation: operationName,
           attempt: attempt + 1,
           maxRetries,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          rawError: error
         });
         
         if (attempt === maxRetries) {
           console.error(`❌ ${operationName} failed after ${maxRetries + 1} attempts:`, {
             finalError: lastError.message,
             operation: operationName,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            fullError: lastError
           });
           throw lastError;
         }
@@ -357,6 +415,50 @@ export class StellarConversionService {
     }
   }
 
+  /**
+   * Check if account exists and create it if necessary
+   */
+  async ensureAccountExists(secretKey: string): Promise<boolean> {
+    try {
+      const keypair = Keypair.fromSecret(secretKey);
+      const publicKey = keypair.publicKey();
+      
+      console.log('🔍 Checking if account exists:', publicKey);
+      
+      try {
+        // Try to load the account
+        const account = await this.server.loadAccount(publicKey);
+        console.log('✅ Account exists, sequence number:', account.sequenceNumber());
+        return true;
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('not found')) {
+          console.log('📝 Account does not exist, creating new account...');
+          
+          // Create account using friendbot (testnet only)
+          try {
+            const response = await fetch(`${STELLAR_CONFIG.friendbotURL}?addr=${publicKey}`);
+            if (response.ok) {
+              console.log('✅ Account created successfully via friendbot');
+              return true;
+            } else {
+              console.error('❌ Failed to create account via friendbot:', response.status);
+              return false;
+            }
+          } catch (friendbotError) {
+            console.error('❌ Friendbot error:', friendbotError);
+            return false;
+          }
+        } else {
+          console.error('❌ Error checking account:', error);
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error in ensureAccountExists:', error);
+      return false;
+    }
+  }
+
   async getExchangeRate(
     sourceAsset: StellarAsset,
     destinationAsset: StellarAsset,
@@ -366,52 +468,78 @@ export class StellarConversionService {
       const source = this.createAsset(sourceAsset);
       const destination = this.createAsset(destinationAsset);
 
-      const pathsCallBuilder = this.server
-        .strictSendPaths(source, sourceAmount, [destination]);
-      
-      // Simple network call with fallback
-      let pathsResponse;
+      console.log('🔍 Fetching exchange rate for:', {
+        sourceAsset: sourceAsset.code,
+        destinationAsset: destinationAsset.code,
+        sourceAmount
+      });
+
+      // Method 1: Try orderbook first for spot price (most reliable)
       try {
-        pathsResponse = await pathsCallBuilder.call();
+        const orderbook = await this.server.orderbook(source, destination).call();
+        
+        if (orderbook.bids.length > 0 && orderbook.asks.length > 0) {
+          // Use the best bid/ask spread for a more accurate rate
+          const bestBid = parseFloat(orderbook.bids[0].price);
+          const bestAsk = parseFloat(orderbook.asks[0].price);
+          const midPrice = (bestBid + bestAsk) / 2;
+          
+          console.log('📊 Orderbook result:', {
+            bestBid,
+            bestAsk,
+            midPrice,
+            sourceAsset: sourceAsset.code,
+            destinationAsset: destinationAsset.code
+          });
+
+          return {
+            rate: midPrice.toString(),
+            updated: new Date()
+          };
+        }
       } catch (error) {
-        console.warn('Network error fetching exchange rate, using fallback');
-        // Return fallback rates for common pairs
-        if (sourceAsset.code === 'XLM' && destinationAsset.code === 'USDC') {
-          return { rate: '0.39', updated: new Date() };
-        }
-        if (sourceAsset.code === 'USDC' && destinationAsset.code === 'XLM') {
-          return { rate: '2.56', updated: new Date() };
-        }
-        return null;
-      }
-      
-      if (pathsResponse.records.length === 0) {
-        return null;
+        console.warn('Orderbook failed:', error);
       }
 
-      const bestPath = pathsResponse.records[0];
-      const rate = (parseFloat(bestPath.destination_amount) / parseFloat(sourceAmount)).toString();
-      
-      const path = bestPath.path.map((pathAsset: any) => ({
-        code: pathAsset.asset_code || 'XLM',
-        issuer: pathAsset.asset_issuer,
-        type: pathAsset.asset_type === 'native' ? 'native' as const : 'credit_alphanum4' as const
-      }));
+      // Method 2: Fallback to strictSendPaths
+      try {
+        const pathsCallBuilder = this.server.strictSendPaths(source, sourceAmount, [destination]);
+        const pathsResponse = await pathsCallBuilder.call();
+        
+        if (pathsResponse.records.length > 0) {
+          const bestPath = pathsResponse.records[0];
+          const calculatedRate = (parseFloat(bestPath.destination_amount) / parseFloat(sourceAmount)).toString();
+          
+          console.log('📊 StrictSendPaths result:', {
+            sourceAmount,
+            destinationAmount: bestPath.destination_amount,
+            calculatedRate
+          });
 
-      return {
-        rate,
-        path: path.length > 0 ? path : undefined,
-        updated: new Date()
-      };
+          // Validate the rate makes sense
+          const rateValue = parseFloat(calculatedRate);
+          if (!isNaN(rateValue) && rateValue > 0) {
+            const path = bestPath.path.map((pathAsset: any) => ({
+              code: pathAsset.asset_code || 'XLM',
+              issuer: pathAsset.asset_issuer,
+              type: pathAsset.asset_type === 'native' ? 'native' as const : 'credit_alphanum4' as const
+            }));
+
+            return {
+              rate: calculatedRate,
+              path: path.length > 0 ? path : undefined,
+              updated: new Date()
+            };
+          }
+        }
+      } catch (error) {
+        console.warn('StrictSendPaths failed:', error);
+      }
+
+      console.error('❌ All methods failed to get exchange rate');
+      return null;
     } catch (error) {
       console.error('Error fetching exchange rate:', error);
-      // Return a fallback rate for XLM/USDC if network fails
-      if (sourceAsset.code === 'XLM' && destinationAsset.code === 'USDC') {
-        return {
-          rate: '0.39', // Fallback rate
-          updated: new Date()
-        };
-      }
       return null;
     }
   }
@@ -449,19 +577,165 @@ export class StellarConversionService {
       };
     } catch (error) {
       console.error('Error estimating conversion:', error);
-      // Return a fallback estimate for XLM/USDC if network fails
-      if (sourceAsset.code === 'XLM' && destinationAsset.code === 'USDC') {
-        const fallbackRate = '0.39';
-        const destinationAmount = (parseFloat(sourceAmount) * parseFloat(fallbackRate)).toFixed(7);
-        return {
-          sourceAmount,
-          destinationAmount,
-          rate: fallbackRate,
-          fee: '0.0000100',
-          estimatedTime: 5
-        };
-      }
       return null;
+    }
+  }
+
+  async establishTrustline(
+    secretKey: string,
+    asset: StellarAsset,
+    limit: string = '1000000'
+  ): Promise<boolean> {
+    try {
+      console.log('🔧 Starting trustline establishment for:', {
+        asset: asset.code,
+        issuer: asset.issuer,
+        limit
+      });
+
+      const keypair = Keypair.fromSecret(secretKey);
+      const publicKey = keypair.publicKey();
+      
+      console.log('🔑 Keypair created for public key:', publicKey);
+      
+      // First, ensure the account exists
+      const accountExists = await this.ensureAccountExists(secretKey);
+      if (!accountExists) {
+        console.error('❌ Failed to ensure account exists');
+        return false;
+      }
+      
+      // Check if trustline already exists
+      const existingTrustline = await this.withRetry(
+        () => this.checkTrustline(publicKey, asset),
+        'check existing trustline',
+        3,
+        1000,
+        15000
+      );
+      
+      if (existingTrustline.exists) {
+        console.log('✅ Trustline already exists for:', asset.code);
+        return true; // Trustline already exists
+      }
+
+      console.log('📝 Trustline does not exist, creating new one...');
+
+      // Load account with retry
+      const account = await this.withRetry(
+        () => this.server.loadAccount(publicKey),
+        'load account for trustline',
+        3,
+        1000,
+        15000
+      );
+
+      console.log('📊 Account loaded, sequence number:', account.sequenceNumber());
+
+      // Check if account has enough XLM for the trustline operation
+      const nativeBalance = account.balances.find(balance => balance.asset_type === 'native');
+      if (nativeBalance) {
+        const balanceXLM = parseFloat(nativeBalance.balance);
+        console.log('💰 Account XLM balance:', balanceXLM);
+        
+        // Trustline operations typically need at least 0.5 XLM for reserve + fee
+        if (balanceXLM < 0.5) {
+          console.error('💸 Insufficient XLM balance for trustline operation. Need at least 0.5 XLM, have:', balanceXLM);
+          return false;
+        }
+      } else {
+        console.error('❌ No native balance found on account');
+        return false;
+      }
+
+      const fee = await this.withRetry(
+        () => this.server.fetchBaseFee(),
+        'fetch base fee for trustline',
+        3,
+        1000,
+        15000
+      );
+
+      console.log('💰 Base fee fetched:', fee);
+
+      const assetObj = this.createAsset(asset);
+      console.log('🏦 Asset object created:', {
+        code: assetObj.getCode(),
+        issuer: assetObj.getIssuer()
+      });
+
+      const txBuilder = new TransactionBuilder(account, {
+        fee: fee.toString(),
+        networkPassphrase: STELLAR_CONFIG.networkPassphrase,
+      });
+
+      console.log('🏗️ Transaction builder created with fee:', fee.toString());
+
+      // Add change trust operation
+      txBuilder.addOperation(
+        Operation.changeTrust({
+          asset: assetObj,
+          limit: limit
+        })
+      );
+
+      console.log('➕ Change trust operation added');
+
+      const transaction = txBuilder.setTimeout(180).build();
+      console.log('🔨 Transaction built, signing...');
+      
+      transaction.sign(keypair);
+      console.log('✍️ Transaction signed');
+
+      // Submit trustline transaction with retry
+      console.log('🚀 Submitting trustline transaction...');
+      const response = await this.withRetry(
+        () => this.server.submitTransaction(transaction),
+        'submit trustline transaction',
+        3, // max retries
+        2000, // base delay of 2 seconds
+        30000 // 30 second timeout for trustline transaction
+      );
+      
+      console.log('✅ Trustline established successfully:', response.hash);
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to establish trustline:', {
+        error: error,
+        errorType: typeof error,
+        errorName: error?.constructor?.name,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : 'No stack trace',
+        asset: asset.code,
+        issuer: asset.issuer
+      });
+      
+      // Enhanced error handling for trustline establishment
+      if (error instanceof Error) {
+        if (error.message.includes('Network Error')) {
+          console.error('🌐 Network error while establishing trustline');
+        } else if (error.message.includes('insufficient_fee')) {
+          console.error('💰 Insufficient fee for trustline transaction');
+        } else if (error.message.includes('bad_seq')) {
+          console.error('🔄 Sequence number mismatch for trustline transaction');
+        } else if (error.message.includes('op_already_exists')) {
+          console.log('⚠️ Trustline already exists - this is actually success');
+          return true; // This is actually a success case
+        } else if (error.message.includes('op_underfunded')) {
+          console.error('💸 Account underfunded for trustline transaction');
+        } else if (error.message.includes('tx_failed')) {
+          console.error('❌ Transaction failed on network');
+        } else if (error.message.includes('op_cross_self')) {
+          console.log('⚠️ Trustline operation on self - this might be expected');
+          return true; // This might be expected in some cases
+        } else {
+          console.error('❌ Unknown trustline error:', error.message);
+        }
+      } else {
+        console.error('❌ Non-Error object thrown:', error);
+      }
+      
+      return false;
     }
   }
 
@@ -475,6 +749,15 @@ export class StellarConversionService {
     memo?: string
   ): Promise<ConversionResult> {
     try {
+      // First, check network connectivity
+      const connectivity = await this.checkNetworkConnectivity();
+      if (!connectivity.connected) {
+        return {
+          success: false,
+          error: connectivity.error || 'Network connectivity issue. Please check your internet connection.'
+        };
+      }
+
       const sourceKeypair = Keypair.fromSecret(sourceSecret);
       const sourcePublicKey = sourceKeypair.publicKey();
       const destinationPublicKey = destination || sourcePublicKey;
@@ -488,16 +771,64 @@ export class StellarConversionService {
         }
       }
 
-      // Check trustlines
-      const sourceTrustline = await this.checkTrustline(sourcePublicKey, sourceAsset);
-      const destTrustline = await this.checkTrustline(destinationPublicKey, destinationAsset);
+      // Ensure source account exists
+      const accountExists = await this.ensureAccountExists(sourceSecret);
+      if (!accountExists) {
+        throw new Error("Source account does not exist and could not be created. Please ensure you have a valid Stellar account.");
+      }
+
+      // Check source trustline
+      const sourceTrustline = await this.withRetry(
+        () => this.checkTrustline(sourcePublicKey, sourceAsset),
+        'check source trustline',
+        3,
+        1000,
+        15000
+      );
 
       if (!sourceTrustline.exists) {
         throw new Error(`Source account does not have trustline for ${sourceAsset.code}`);
       }
 
-      if (!destTrustline.exists && destinationAsset.type !== 'native') {
-        throw new Error(`Destination account does not have trustline for ${destinationAsset.code}`);
+      // For self-conversions, establish destination trustline if needed
+      if (destinationPublicKey === sourcePublicKey && destinationAsset.type !== 'native') {
+        const destTrustline = await this.withRetry(
+          () => this.checkTrustline(sourcePublicKey, destinationAsset),
+          'check destination trustline',
+          3,
+          1000,
+          15000
+        );
+        
+        if (!destTrustline.exists) {
+          console.log(`Establishing trustline for ${destinationAsset.code}...`);
+          const trustlineEstablished = await this.withRetry(
+            () => this.establishTrustline(sourceSecret, destinationAsset),
+            'establish trustline',
+            3,
+            2000,
+            30000
+          );
+          
+          if (!trustlineEstablished) {
+            throw new Error(`Failed to establish trustline for ${destinationAsset.code}. Please try again.`);
+          }
+        }
+      }
+
+      // Only check destination trustline if it's a different account
+      if (destinationPublicKey !== sourcePublicKey) {
+        const destTrustline = await this.withRetry(
+          () => this.checkTrustline(destinationPublicKey, destinationAsset),
+          'check destination trustline for different account',
+          3,
+          1000,
+          15000
+        );
+        
+        if (!destTrustline.exists && destinationAsset.type !== 'native') {
+          throw new Error(`Destination account does not have trustline for ${destinationAsset.code}`);
+        }
       }
 
       // Check balance
@@ -508,9 +839,22 @@ export class StellarConversionService {
         throw new Error(`Insufficient balance. Available: ${sourceBalance} ${sourceAsset.code}`);
       }
 
-      // Load account and create transaction
-      const account = await this.server.loadAccount(sourcePublicKey);
-      const fee = await this.server.fetchBaseFee();
+      // Load account and create transaction with retry
+      const account = await this.withRetry(
+        () => this.server.loadAccount(sourcePublicKey),
+        'load account',
+        3,
+        1000,
+        15000
+      );
+
+      const fee = await this.withRetry(
+        () => this.server.fetchBaseFee(),
+        'fetch base fee',
+        3,
+        1000,
+        15000
+      );
 
       const sourceAssetObj = this.createAsset(sourceAsset);
       const destAssetObj = this.createAsset(destinationAsset);
@@ -538,7 +882,30 @@ export class StellarConversionService {
       const transaction = txBuilder.setTimeout(180).build();
       transaction.sign(sourceKeypair);
 
-      const response = await this.server.submitTransaction(transaction);
+      // Submit transaction with retry mechanism
+      console.log('🚀 About to submit transaction...');
+      console.log('📋 Transaction details:', {
+        sourcePublicKey,
+        destinationPublicKey,
+        sourceAsset: sourceAsset.code,
+        destinationAsset: destinationAsset.code,
+        sourceAmount,
+        destinationMin,
+        memo
+      });
+      
+      const response = await this.withRetry(
+        () => {
+          console.log('🔄 Attempting to submit transaction...');
+          return this.server.submitTransaction(transaction);
+        },
+        'submit transaction',
+        3, // max retries
+        2000, // base delay of 2 seconds
+        45000 // 45 second timeout for transaction submission
+      );
+
+      console.log('✅ Transaction submitted successfully:', response.hash);
 
       return {
         success: true,
@@ -546,10 +913,29 @@ export class StellarConversionService {
       };
     } catch (error: unknown) {
       console.error('Conversion failed:', error);
-      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      // Enhanced error handling
+      let errorMessage = 'Unknown error occurred';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Network Error')) {
+          errorMessage = 'Network connection issue. Please check your internet connection and try again.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Request timed out. Please try again.';
+        } else if (error.message.includes('insufficient_fee')) {
+          errorMessage = 'Transaction fee too low. Please try again.';
+        } else if (error.message.includes('bad_seq')) {
+          errorMessage = 'Account sequence number mismatch. Please refresh and try again.';
+        } else if (error.message.includes('tx_failed')) {
+          errorMessage = 'Transaction failed. Please check your balance and try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       return {
         success: false,
-        error: message
+        error: errorMessage
       };
     }
   }

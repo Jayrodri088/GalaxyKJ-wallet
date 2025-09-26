@@ -8,30 +8,17 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { ComponentPerformanceTester, PerformanceTestSuite, PerformanceTestResult } from '@/lib/performance/testing-utils';
 import { PerformanceTestRunner, TestRunSummary } from '@/lib/performance/test-runner';
+import { 
+  ComponentPerformanceMetrics, 
+  PerformanceMonitoringOptions, 
+  TestRunSummary as PerformanceTestRunSummary,
+  PerformanceIssue,
+  PerformanceTrackingOptions,
+  RealTimePerformanceMetrics
+} from '@/types/performance-metrics';
 
-// Hook options interface
-export interface UsePerformanceTestingOptions {
-  componentName?: string;
-  enableAutoTesting?: boolean;
-  testInterval?: number; // milliseconds
-  thresholds?: {
-    renderTime?: number;
-    memoryUsage?: number;
-  };
-  onTestComplete?: (result: TestRunSummary) => void;
-  onThresholdExceeded?: (metric: string, value: number, threshold: number) => void;
-}
-
-// Performance metrics interface
-export interface ComponentPerformanceMetrics {
-  averageRenderTime: number;
-  maxRenderTime: number;
-  minRenderTime: number;
-  averageMemoryUsage: number;
-  totalRenders: number;
-  lastRenderTime: number;
-  isHealthy: boolean;
-}
+// Hook options interface - now using centralized types
+export interface UsePerformanceTestingOptions extends PerformanceMonitoringOptions {}
 
 /**
  * Hook for component-level performance testing
@@ -48,6 +35,10 @@ export function useComponentPerformanceTesting(options: UsePerformanceTestingOpt
 
   const testerRef = useRef<ComponentPerformanceTester>();
   const [metrics, setMetrics] = useState<ComponentPerformanceMetrics>({
+    timestamp: Date.now(),
+    duration: 0,
+    score: 0,
+    passed: true,
     averageRenderTime: 0,
     maxRenderTime: 0,
     minRenderTime: 0,
@@ -82,25 +73,31 @@ export function useComponentPerformanceTesting(options: UsePerformanceTestingOpt
     if (!testerRef.current) return;
 
     const stats = testerRef.current.getStats();
+    const isHealthy = 
+      stats.averageRenderTime <= (thresholds?.rendering?.maxRenderTime || 16) &&
+      stats.averageMemoryUsage <= (thresholds?.memory?.maxRenderMemory || 5 * 1024 * 1024);
+    
     const newMetrics: ComponentPerformanceMetrics = {
+      timestamp: Date.now(),
+      duration: performance.now(),
+      score: isHealthy ? 100 : Math.max(0, 100 - (stats.averageRenderTime / 16) * 50),
+      passed: isHealthy,
       averageRenderTime: stats.averageRenderTime,
       maxRenderTime: stats.maxRenderTime,
       minRenderTime: stats.minRenderTime,
       averageMemoryUsage: stats.averageMemoryUsage,
       totalRenders: stats.totalRenders,
       lastRenderTime: stats.averageRenderTime, // Approximation
-      isHealthy: 
-        stats.averageRenderTime <= (thresholds.renderTime || 16) &&
-        stats.averageMemoryUsage <= (thresholds.memoryUsage || 5 * 1024 * 1024),
+      isHealthy,
     };
 
     // Check thresholds
     if (onThresholdExceeded) {
-      if (stats.averageRenderTime > (thresholds.renderTime || 16)) {
-        onThresholdExceeded('renderTime', stats.averageRenderTime, thresholds.renderTime || 16);
+      if (stats.averageRenderTime > (thresholds?.rendering?.maxRenderTime || 16)) {
+        onThresholdExceeded('renderTime', stats.averageRenderTime, thresholds?.rendering?.maxRenderTime || 16);
       }
-      if (stats.averageMemoryUsage > (thresholds.memoryUsage || 5 * 1024 * 1024)) {
-        onThresholdExceeded('memoryUsage', stats.averageMemoryUsage, thresholds.memoryUsage || 5 * 1024 * 1024);
+      if (stats.averageMemoryUsage > (thresholds?.memory?.maxRenderMemory || 5 * 1024 * 1024)) {
+        onThresholdExceeded('memoryUsage', stats.averageMemoryUsage, thresholds?.memory?.maxRenderMemory || 5 * 1024 * 1024);
       }
     }
 
@@ -124,6 +121,10 @@ export function useComponentPerformanceTesting(options: UsePerformanceTestingOpt
     if (testerRef.current) {
       testerRef.current.reset();
       setMetrics({
+        timestamp: Date.now(),
+        duration: 0,
+        score: 100,
+        passed: true,
         averageRenderTime: 0,
         maxRenderTime: 0,
         minRenderTime: 0,
@@ -162,7 +163,7 @@ export function useComponentPerformanceTesting(options: UsePerformanceTestingOpt
 export function useApplicationPerformanceTesting(options: {
   autoStart?: boolean;
   testInterval?: number; // minutes
-  onTestComplete?: (result: TestRunSummary) => void;
+  onTestComplete?: (result: PerformanceTestRunSummary) => void;
   onTestFailed?: (error: Error) => void;
 } = {}) {
   const {
@@ -173,8 +174,8 @@ export function useApplicationPerformanceTesting(options: {
   } = options;
 
   const [isRunning, setIsRunning] = useState(false);
-  const [lastResult, setLastResult] = useState<TestRunSummary | null>(null);
-  const [testHistory, setTestHistory] = useState<TestRunSummary[]>([]);
+  const [lastResult, setLastResult] = useState<PerformanceTestRunSummary | null>(null);
+  const [testHistory, setTestHistory] = useState<PerformanceTestRunSummary[]>([]);
   const [error, setError] = useState<Error | null>(null);
 
   const testRunnerRef = useRef<PerformanceTestRunner>();
@@ -291,13 +292,7 @@ export function useApplicationPerformanceTesting(options: {
 /**
  * Hook for monitoring specific performance metrics
  */
-export function usePerformanceMetrics(options: {
-  trackRenderTime?: boolean;
-  trackMemoryUsage?: boolean;
-  trackBundleSize?: boolean;
-  trackNetworkRequests?: boolean;
-  sampleRate?: number; // 0-1, percentage of renders to measure
-} = {}) {
+export function usePerformanceMetrics(options: PerformanceTrackingOptions = {}) {
   const {
     trackRenderTime = true,
     trackMemoryUsage = true,
@@ -306,7 +301,7 @@ export function usePerformanceMetrics(options: {
     sampleRate = 0.1, // 10% of renders
   } = options;
 
-  const [metrics, setMetrics] = useState({
+  const [metrics, setMetrics] = useState<RealTimePerformanceMetrics>({
     renderTime: 0,
     memoryUsage: 0,
     bundleSize: 0,
@@ -395,12 +390,7 @@ export function usePerformanceTesting(options: {
     memoryUsage?: number;
   };
   applicationTestInterval?: number; // minutes
-  onPerformanceIssue?: (issue: {
-    type: 'component' | 'application';
-    severity: 'warning' | 'critical';
-    message: string;
-    metrics?: any;
-  }) => void;
+  onPerformanceIssue?: (issue: PerformanceIssue) => void;
 } = {}) {
   const {
     componentName,

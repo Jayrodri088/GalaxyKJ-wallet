@@ -1,6 +1,6 @@
 /**
  * Performance Metrics Types
- * 
+ *
  * Centralized type definitions for performance metrics in the Galaxy Smart Wallet.
  * This file provides structured interfaces for all performance-related data.
  */
@@ -142,15 +142,19 @@ export interface PerformanceMonitoringOptions {
   testInterval?: number; // milliseconds
   thresholds?: Partial<PerformanceThresholds>;
   onTestComplete?: (result: TestRunSummary) => void;
-  onThresholdExceeded?: (metric: string, value: number, threshold: number) => void;
+  onThresholdExceeded?: (
+    metric: string,
+    value: number,
+    threshold: number,
+  ) => void;
 }
 
 // Performance issue classification
 export interface PerformanceIssue {
-  type: 'component' | 'application';
-  severity: 'warning' | 'critical';
+  type: "component" | "application";
+  severity: "warning" | "critical";
   message: string;
-  metrics?: Record<string, any>;
+  metrics?: Record<string, unknown>;
 }
 
 // Performance metrics tracking options
@@ -173,16 +177,16 @@ export interface RealTimePerformanceMetrics {
 
 // Performance test configuration
 export interface PerformanceTestConfig {
-  loadingThresholds: PerformanceThresholds['loading'];
-  bundleThresholds: PerformanceThresholds['bundle'];
-  memoryThresholds: PerformanceThresholds['memory'];
-  renderingThresholds: PerformanceThresholds['rendering'];
+  loadingThresholds: PerformanceThresholds["loading"];
+  bundleThresholds: PerformanceThresholds["bundle"];
+  memoryThresholds: PerformanceThresholds["memory"];
+  renderingThresholds: PerformanceThresholds["rendering"];
 }
 
 // Test run options
 export interface TestRunOptions {
   config?: Partial<PerformanceTestConfig>;
-  outputFormat?: 'console' | 'json' | 'html' | 'markdown';
+  outputFormat?: "console" | "json" | "html" | "markdown";
   saveResults?: boolean;
   resultsPath?: string;
   includeDetailed?: boolean;

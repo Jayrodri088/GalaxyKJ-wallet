@@ -4,10 +4,6 @@ const nextConfig: NextConfig = {
   /* config options here */
   experimental: {
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react', '@stellar/stellar-sdk'],
-    turbotrace: {
-      logLevel: 'error',
-    },
-    serverComponentsExternalPackages: ['@stellar/stellar-sdk'],
   },
   
   // Performance optimizations
@@ -97,16 +93,18 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 365, // 1 year
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-  eslint: {
-    // Temporarily ignore ESLint errors during build
-    ignoreDuringBuilds: true,
-  },
     remotePatterns: [
       {
         protocol: 'https',
         hostname: '**',
       },
     ],
+  },
+
+  // ESLint configuration
+  eslint: {
+    // Temporarily ignore ESLint errors during build
+    ignoreDuringBuilds: true,
   },
   
   // Performance and caching headers

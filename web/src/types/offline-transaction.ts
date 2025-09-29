@@ -16,7 +16,11 @@ export interface OfflineTransactionData {
 }
 
 // Transaction status types
-export type OfflineTransactionStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type OfflineTransactionStatus =
+  | "pending"
+  | "processing"
+  | "completed"
+  | "failed";
 
 // Offline transaction structure stored in IndexedDB
 export interface OfflineTransaction {

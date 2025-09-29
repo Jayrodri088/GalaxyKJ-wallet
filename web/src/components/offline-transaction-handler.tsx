@@ -14,29 +14,18 @@ import {
   AlertTriangle,
   RefreshCw
 } from 'lucide-react';
-
-interface TransactionData {
-  to: string;
-  amount: string;
-  asset: string;
-  memo?: string;
-}
+import { OfflineTransactionData, OfflineTransactionResult } from '../types/offline-transaction';
 
 export function OfflineTransactionHandler() {
   const { isOnline, pendingTransactions, sendTransactionOffline, getPendingTransactions } = useOfflineTransactions();
-  const [transactionData, setTransactionData] = useState<TransactionData>({
+  const [transactionData, setTransactionData] = useState<OfflineTransactionData>({
     to: '',
     amount: '',
     asset: 'XLM',
     memo: ''
   });
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{
-    success: boolean;
-    message: string;
-    queued?: boolean;
-    transactionId?: string;
-  } | null>(null);
+  const [result, setResult] = useState<OfflineTransactionResult | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +61,7 @@ export function OfflineTransactionHandler() {
           message: 'Error al procesar la transacción'
         });
       }
-    } catch (error) {
+    } catch {
       setResult({
         success: false,
         message: 'Error al procesar la transacción'

@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react', '@stellar/stellar-sdk'],
   },
   
+  // External packages for server components
+  serverExternalPackages: ['@stellar/stellar-sdk'],
+  
   // Performance optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {
@@ -101,6 +104,12 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // ESLint configuration
+  eslint: {
+    // Temporarily ignore ESLint errors during build
+    ignoreDuringBuilds: true,
+  },
+  
   // ESLint configuration
   eslint: {
     // Temporarily ignore ESLint errors during build

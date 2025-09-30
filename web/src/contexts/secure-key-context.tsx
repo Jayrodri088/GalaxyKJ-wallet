@@ -119,6 +119,10 @@ export function SecureKeyProvider({ children, initial }: ProviderProps) {
       clearError();
       try {
         // TODO: load/decrypt from secure storage using passphrase / device auth
+        // For now, we'll use the passphrase parameter in the mock implementation
+        if (passphrase && passphrase.length < 3) {
+          throw new Error("Passphrase too short");
+        }
         privateKeyRef.current = "mock-private-key";
         setIsLocked(false);
         if (!keyId) setKeyId("mock-key-id");

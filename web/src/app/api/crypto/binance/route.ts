@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
   BinanceTickerResponse, 
-  CryptoPriceResponse, 
-  ErrorResponse 
+  CryptoPriceResponse,
+  HttpStatusCode 
 } from '@/types/api-responses';
+import {
+  validateParameters,
+  createValidationErrorResponse,
+  createExternalApiErrorResponse,
+  handleApiRequest,
+  CORS_HEADERS
+} from '@/lib/api-utils';
 
 // Mapping from our symbols to Binance symbols
 const BINANCE_SYMBOL_MAP: { [key: string]: string } = {
@@ -24,37 +31,61 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const symbols = searchParams.get('symbols');
 
-    if (!symbols) {
-      const errorResponse: ErrorResponse = { error: 'Missing required parameter: symbols' };
-      return NextResponse.json(errorResponse, { status: 400 });
+    // Validate parameters
+    const validation = validateParameters(
+      { symbols },
+      {
+        symbols: {
+          required: true,
+          type: 'string',
+          minLength: 1,
+          pattern: /^[A-Z,]+$/i
+        }
+      }
+    );
+
+    if (!validation.isValid) {
+      return createValidationErrorResponse(validation.errors);
     }
 
-    const symbolList = symbols.split(',');
+    const symbolList = symbols!.split(',').map(s => s.trim().toUpperCase());
     const binanceSymbols = symbolList
-      .map(symbol => BINANCE_SYMBOL_MAP[symbol.toUpperCase()])
+      .map(symbol => BINANCE_SYMBOL_MAP[symbol])
       .filter(Boolean);
 
     if (binanceSymbols.length === 0) {
-      const errorResponse: ErrorResponse = { error: 'No valid symbols found' };
-      return NextResponse.json(errorResponse, { status: 400 });
+      return createValidationErrorResponse(['No valid symbols found. Supported symbols: ' + Object.keys(BINANCE_SYMBOL_MAP).join(', ')]);
     }
 
     // Get 24hr ticker statistics for all symbols
     const tickerUrl = 'https://api.binance.com/api/v3/ticker/24hr';
     
-    const response = await fetch(tickerUrl, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Galaxy-Smart-Wallet/1.0'
-      },
-      next: { revalidate: 60 } // Cache for 60 seconds
-    });
+    const apiResult = await handleApiRequest(
+      async () => {
+        const response = await fetch(tickerUrl, {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Galaxy-Smart-Wallet/1.0'
+          },
+          next: { revalidate: 60 }, // Cache for 60 seconds
+          signal: AbortSignal.timeout(10000)
+        });
 
-    if (!response.ok) {
-      throw new Error(`Binance API responded with status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return await response.json() as BinanceTickerResponse;
+      },
+      'Binance',
+      10000
+    );
+
+    if (apiResult.error) {
+      return apiResult.error;
     }
 
-    const allTickers: BinanceTickerResponse = await response.json();
+    const allTickers = apiResult.data!;
 
     // Filter and format the data for our symbols
     const filteredData: CryptoPriceResponse = allTickers
@@ -73,29 +104,24 @@ export async function GET(request: NextRequest) {
         return acc;
       }, {} as CryptoPriceResponse);
 
-    // Add CORS headers
+    // Return response with CORS headers
     return NextResponse.json(filteredData, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Cache-Control': 's-maxage=60, stale-while-revalidate'
-      }
+      status: HttpStatusCode.OK,
+      headers: CORS_HEADERS
     });
 
   } catch (error) {
     console.error('Binance proxy error:', error);
-    const errorResponse: ErrorResponse = { error: 'Failed to fetch data from Binance' };
-    return NextResponse.json(errorResponse, { status: 500 });
+    return createExternalApiErrorResponse('Binance');
   }
 }
 
 export async function OPTIONS() {
   return new Response(null, {
-    status: 200,
+    status: HttpStatusCode.OK,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });

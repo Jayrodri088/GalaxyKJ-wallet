@@ -130,55 +130,51 @@ const CRYPTO_IDS = {
 const priceCache = new Map<string, { price: number; change24h: number; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-// Helper function to make API requests with timeout and CORS handling
-const makeApiRequest = async <T = unknown>(url: string, timeout: number = 8000): Promise<T> => {
-  if (typeof window === 'undefined') {
-    // Server-side: use fetch
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
-    try {
-      const response = await fetch(url, {
-        signal: controller.signal,
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Galaxy-Smart-Wallet/1.0'
-        }
-      });
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      
-      return await response.json() as T;
-    } catch (err) {
-      clearTimeout(timeoutId);
-      throw err;
-    }
-  } else {
-    // Client-side: use XMLHttpRequest for better timeout control
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.timeout = timeout;
-      xhr.open('GET', url);
-      xhr.setRequestHeader('Accept', 'application/json');
-      
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            resolve(JSON.parse(xhr.responseText) as T);
-          } catch {
-            reject(new Error('Invalid JSON response'));
-          }
-        } else {
-          reject(new Error(`HTTP ${xhr.status}`));
-        }
-      };
-      xhr.onerror = () => reject(new Error('Network error'));
-      xhr.ontimeout = () => reject(new Error('Request timeout'));
-      xhr.send();
+// Enhanced API request function with better error handling and timeout support
+const makeApiRequest = async <T = unknown>(url: string, timeout: number = 10000): Promise<T> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Galaxy-Smart-Wallet/1.0'
+      },
+      cache: 'no-store' // Ensure fresh data
     });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      // Handle structured error responses
+      try {
+        const errorData = await response.json();
+        if (errorData.error && errorData.message) {
+          throw new Error(`API Error: ${errorData.message} (${errorData.error})`);
+        }
+      } catch {
+        // Fallback to generic HTTP error
+      }
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json() as T;
+    return data;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - please try again');
+      }
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Network connection failed - check your internet connection');
+      }
+    }
+    
+    throw error;
   }
 };
 
@@ -211,7 +207,10 @@ const fetchFromCoinGecko = async (): Promise<CryptoPrice[] | null> => {
       };
     }).filter(Boolean) as CryptoPrice[];
   } catch (error) {
-    console.error('CoinGecko API error:', error);
+    console.error('CoinGecko API error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
     return null;
   }
 };
@@ -245,7 +244,10 @@ const fetchFromCryptoCompare = async (): Promise<CryptoPrice[] | null> => {
       };
     }).filter(Boolean) as CryptoPrice[];
   } catch (error) {
-    console.error('CryptoCompare API error:', error);
+    console.error('CryptoCompare API error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
     return null;
   }
 };
@@ -279,7 +281,10 @@ const fetchFromBinance = async (): Promise<CryptoPrice[] | null> => {
       };
     }).filter(Boolean) as CryptoPrice[];
   } catch (error) {
-    console.error('Binance API error:', error);
+    console.error('Binance API error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
     return null;
   }
 };
@@ -406,12 +411,12 @@ export function useCryptoPrices() {
         console.log('Using cached prices:', cachedPrices.filter(p => p.price > 0).length, 'cached');
         setPrices(cachedPrices);
         setDataSource('cache');
-        setError('Using cached prices - All APIs temporarily unavailable');
+        setError('Using cached data - unable to fetch fresh prices from external APIs');
       } else {
         console.log('No data available from any source');
         setPrices(createEmptyPrices());
         setDataSource('none');
-        setError('Unable to fetch prices from any source. Please check your internet connection.');
+        setError('All cryptocurrency price sources are currently unavailable. Please check your internet connection and try again.');
       }
       
     } catch (err) {

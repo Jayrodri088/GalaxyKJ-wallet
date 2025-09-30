@@ -6,10 +6,14 @@ export interface ApiResponse<T = unknown> {
 }
 
 
+// Error response structure
 export interface ErrorResponse {
   error: string;
+  code: string;
+  message: string;
   status?: number;
-  details?: string;
+  details?: Record<string, unknown>;
+  timestamp: number;
 }
 
 
@@ -194,10 +198,12 @@ export enum HttpStatusCode {
   NOT_FOUND = 404,
   INTERNAL_SERVER_ERROR = 500,
   BAD_GATEWAY = 502,
-  SERVICE_UNAVAILABLE = 503
+  SERVICE_UNAVAILABLE = 503,
+  GATEWAY_TIMEOUT = 504
 }
 
 
+// Common API error types
 export type ApiErrorType = 
   | 'VALIDATION_ERROR'
   | 'AUTHENTICATION_ERROR'
@@ -205,7 +211,20 @@ export type ApiErrorType =
   | 'NOT_FOUND_ERROR'
   | 'RATE_LIMIT_ERROR'
   | 'EXTERNAL_API_ERROR'
-  | 'INTERNAL_SERVER_ERROR';
+  | 'INTERNAL_SERVER_ERROR'
+  | 'TIMEOUT_ERROR'
+  | 'NETWORK_ERROR';
+
+// Standard error messages
+export const ERROR_MESSAGES = {
+  MISSING_PARAMETER: 'Missing required parameter',
+  INVALID_PARAMETER: 'Invalid parameter value',
+  EXTERNAL_API_FAILED: 'External API request failed',
+  TIMEOUT_ERROR: 'Request timeout exceeded',
+  NETWORK_ERROR: 'Network connection failed',
+  INVALID_SYMBOLS: 'No valid symbols provided',
+  RATE_LIMIT_EXCEEDED: 'Rate limit exceeded',
+} as const;
 
 export interface DetailedErrorResponse {
   error: string;

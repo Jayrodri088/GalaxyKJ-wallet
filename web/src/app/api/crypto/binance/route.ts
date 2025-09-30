@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { 
+  BinanceTickerResponse, 
+  CryptoPriceResponse, 
+  ErrorResponse 
+} from '@/types/api-responses';
 
 // Mapping from our symbols to Binance symbols
 const BINANCE_SYMBOL_MAP: { [key: string]: string } = {
@@ -20,10 +25,8 @@ export async function GET(request: NextRequest) {
     const symbols = searchParams.get('symbols');
 
     if (!symbols) {
-      return NextResponse.json(
-        { error: 'Missing required parameter: symbols' },
-        { status: 400 }
-      );
+      const errorResponse: ErrorResponse = { error: 'Missing required parameter: symbols' };
+      return NextResponse.json(errorResponse, { status: 400 });
     }
 
     const symbolList = symbols.split(',');
@@ -32,10 +35,8 @@ export async function GET(request: NextRequest) {
       .filter(Boolean);
 
     if (binanceSymbols.length === 0) {
-      return NextResponse.json(
-        { error: 'No valid symbols found' },
-        { status: 400 }
-      );
+      const errorResponse: ErrorResponse = { error: 'No valid symbols found' };
+      return NextResponse.json(errorResponse, { status: 400 });
     }
 
     // Get 24hr ticker statistics for all symbols
@@ -53,12 +54,12 @@ export async function GET(request: NextRequest) {
       throw new Error(`Binance API responded with status: ${response.status}`);
     }
 
-    const allTickers = await response.json();
+    const allTickers: BinanceTickerResponse = await response.json();
 
     // Filter and format the data for our symbols
-    const filteredData = allTickers
-      .filter((ticker: any) => binanceSymbols.includes(ticker.symbol))
-      .reduce((acc: any, ticker: any) => {
+    const filteredData: CryptoPriceResponse = allTickers
+      .filter((ticker) => binanceSymbols.includes(ticker.symbol))
+      .reduce((acc, ticker) => {
         // Find the original symbol
         const originalSymbol = Object.keys(BINANCE_SYMBOL_MAP)
           .find(key => BINANCE_SYMBOL_MAP[key] === ticker.symbol);
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
           };
         }
         return acc;
-      }, {});
+      }, {} as CryptoPriceResponse);
 
     // Add CORS headers
     return NextResponse.json(filteredData, {
@@ -84,10 +85,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Binance proxy error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch data from Binance' },
-      { status: 500 }
-    );
+    const errorResponse: ErrorResponse = { error: 'Failed to fetch data from Binance' };
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
 

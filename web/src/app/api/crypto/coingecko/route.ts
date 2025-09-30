@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { CoinGeckoResponse, ErrorResponse } from '@/types/api-responses';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,10 +9,8 @@ export async function GET(request: NextRequest) {
     const include_24hr_change = searchParams.get('include_24hr_change') || 'true';
 
     if (!ids) {
-      return NextResponse.json(
-        { error: 'Missing required parameter: ids' },
-        { status: 400 }
-      );
+      const errorResponse: ErrorResponse = { error: 'Missing required parameter: ids' };
+      return NextResponse.json(errorResponse, { status: 400 });
     }
 
     const coingeckoUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=${vs_currencies}&include_24hr_change=${include_24hr_change}`;
@@ -28,7 +27,7 @@ export async function GET(request: NextRequest) {
       throw new Error(`CoinGecko API responded with status: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data: CoinGeckoResponse = await response.json();
 
     // Add CORS headers
     return NextResponse.json(data, {
@@ -42,10 +41,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('CoinGecko proxy error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch data from CoinGecko' },
-      { status: 500 }
-    );
+    const errorResponse: ErrorResponse = { error: 'Failed to fetch data from CoinGecko' };
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
 

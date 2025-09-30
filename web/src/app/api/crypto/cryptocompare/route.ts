@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { CryptoCompareResponse, ErrorResponse } from '@/types/api-responses';
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,10 +8,8 @@ export async function GET(request: NextRequest) {
     const tsyms = searchParams.get('tsyms') || 'USD';
 
     if (!fsyms) {
-      return NextResponse.json(
-        { error: 'Missing required parameter: fsyms' },
-        { status: 400 }
-      );
+      const errorResponse: ErrorResponse = { error: 'Missing required parameter: fsyms' };
+      return NextResponse.json(errorResponse, { status: 400 });
     }
 
     const cryptocompareUrl = `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${fsyms}&tsyms=${tsyms}`;
@@ -27,7 +26,7 @@ export async function GET(request: NextRequest) {
       throw new Error(`CryptoCompare API responded with status: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data: CryptoCompareResponse = await response.json();
 
     // Add CORS headers
     return NextResponse.json(data, {
@@ -41,10 +40,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('CryptoCompare proxy error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch data from CryptoCompare' },
-      { status: 500 }
-    );
+    const errorResponse: ErrorResponse = { error: 'Failed to fetch data from CryptoCompare' };
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
 
